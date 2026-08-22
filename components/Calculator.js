@@ -213,55 +213,109 @@ export default function Calculator({ onSave }) {
 
       {/* 结果区域 */}
       {result && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">计算结果</h3>
-
-          {/* 核心数字 + 饼图 */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg mb-6">
-            <div className="flex items-center gap-6">
-              {/* 数字 */}
-              <div className="flex-1 text-center">
-                <p className="text-gray-600 mb-1">{result.monthly.month} 月税后到手收入</p>
-                <p className="text-4xl font-bold text-green-600">¥{formatMoney(result.monthly.netPay)}</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  年到手约 ¥{formatMoney(result.annual.net)}
-                </p>
+        <div className="space-y-6">
+          {/* 年度汇总 */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold mb-4">年度汇总</h3>
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg">
+              <div className="flex items-center gap-6">
+                <div className="flex-1 text-center">
+                  <p className="text-gray-600 mb-1">年到手收入</p>
+                  <p className="text-4xl font-bold text-green-600">¥{formatMoney(result.annual.net)}</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    年总收入 ¥{formatMoney(result.annual.gross)} · 个税 ¥{formatMoney(result.annual.tax)}
+                  </p>
+                </div>
+                <div className="flex-shrink-0">
+                  <DonutChart
+                    netPay={result.annual.net}
+                    insurance={result.annual.insurance}
+                    tax={result.annual.tax}
+                  />
+                </div>
               </div>
-              {/* 简易环形图 */}
-              <div className="flex-shrink-0">
-                <DonutChart
-                  netPay={result.monthly.netPay}
-                  insurance={result.monthly.insurance.total}
-                  tax={result.monthly.tax}
-                />
+            </div>
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+              <SummaryItem label="年基本工资" value={result.annual.baseSalary} />
+              <SummaryItem label="年五险一金" value={result.annual.insurance} negative />
+              <SummaryItem label="年个税" value={result.annual.tax} negative />
+              <SummaryItem label="计税额外收入" value={result.annual.taxableExtraIncome} />
+            </div>
+          </div>
+
+          {/* 12 个月卡片 */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold mb-4">各月明细</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {MONTH_OPTIONS.map(month => {
+                const monthData = result.annual.monthlyBreakdown[month - 1]
+                const extra = result.annual.monthlyExtraIncomes?.[month - 1] || { taxable: 0, nonTaxable: 0 }
+                const gross = result.monthly.baseSalary + extra.taxable + extra.nonTaxable
+                const netPay = Math.round((gross - result.monthly.insurance.total - monthData.tax) * 100) / 100
+                const isSelected = selectedMonth === month
+                return (
+                  <button
+                    key={month}
+                    onClick={() => setSelectedMonth(month)}
+                    className={`text-left rounded-xl border p-4 transition hover:shadow-md ${
+                      isSelected
+                        ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500'
+                        : 'border-gray-200 bg-white hover:border-indigo-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-600">{month} 月</span>
+                      {isSelected && <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">当前</span>}
+                    </div>
+                    <p className="text-2xl font-bold text-green-600 mb-3">¥{formatMoney(netPay)}</p>
+                    <div className="space-y-1 text-xs text-gray-500">
+                      <div className="flex justify-between">
+                        <span>总收入</span>
+                        <span>¥{formatMoney(gross)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>五险一金</span>
+                        <span className="text-red-500">-¥{formatMoney(result.monthly.insurance.total)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>个税</span>
+                        <span className="text-red-500">-¥{formatMoney(monthData.tax)}</span>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+            <p className="text-xs text-gray-500 mt-4">点击卡片可切换到对应月份，编辑该月额外收入。</p>
+          </div>
+
+          {/* 当前月份明细 */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold mb-4">{result.monthly.month} 月明细</h3>
+            <div className="space-y-3">
+              <DetailRow label="基础税前月薪" value={result.monthly.baseSalary} />
+              {result.monthly.taxableExtraIncome > 0 && (
+                <DetailRow label="计税额外收入" value={result.monthly.taxableExtraIncome} />
+              )}
+              {result.monthly.nonTaxableExtraIncome > 0 && (
+                <DetailRow label="不计税额外收入" value={result.monthly.nonTaxableExtraIncome} />
+              )}
+              <DetailRow label="当月总收入" value={result.monthly.gross} bold />
+              <DetailRow label={`养老保险（${result.monthly.insurance.rates.pension * 100}%）`} value={result.monthly.insurance.pension} negative />
+              <DetailRow label={`医疗保险（${result.monthly.insurance.rates.medical * 100}%）`} value={result.monthly.insurance.medical} negative />
+              <DetailRow label={`失业保险（${result.monthly.insurance.rates.unemployment * 100}%）`} value={result.monthly.insurance.unemployment} negative />
+              <DetailRow label={`住房公积金（${Math.round(result.monthly.insurance.rates.housing * 100)}%）`} value={result.monthly.insurance.housing} negative />
+              <DetailRow label="五险一金合计" value={result.monthly.insurance.total} negative bold />
+              <DetailRow label="个人所得税" value={result.monthly.tax} negative bold />
+              <div className="flex justify-between py-2 font-semibold text-lg border-t-2 border-gray-200 mt-2 pt-3">
+                <span>到手月薪</span>
+                <span className="text-green-600">¥{formatMoney(result.monthly.netPay)}</span>
               </div>
             </div>
           </div>
 
-          {/* 明细 */}
-          <div className="space-y-3">
-            <DetailRow label="基础税前月薪" value={result.monthly.baseSalary} />
-            {result.monthly.taxableExtraIncome > 0 && (
-              <DetailRow label="计税额外收入" value={result.monthly.taxableExtraIncome} />
-            )}
-            {result.monthly.nonTaxableExtraIncome > 0 && (
-              <DetailRow label="不计税额外收入" value={result.monthly.nonTaxableExtraIncome} />
-            )}
-            <DetailRow label="当月总收入" value={result.monthly.gross} bold />
-            <DetailRow label={`养老保险（${result.monthly.insurance.rates.pension * 100}%）`} value={result.monthly.insurance.pension} negative />
-            <DetailRow label={`医疗保险（${result.monthly.insurance.rates.medical * 100}%）`} value={result.monthly.insurance.medical} negative />
-            <DetailRow label={`失业保险（${result.monthly.insurance.rates.unemployment * 100}%）`} value={result.monthly.insurance.unemployment} negative />
-            <DetailRow label={`住房公积金（${Math.round(result.monthly.insurance.rates.housing * 100)}%）`} value={result.monthly.insurance.housing} negative />
-            <DetailRow label="五险一金合计" value={result.monthly.insurance.total} negative bold />
-            <DetailRow label="个人所得税" value={result.monthly.tax} negative bold />
-            <div className="flex justify-between py-2 font-semibold text-lg border-t-2 border-gray-200 mt-2 pt-3">
-              <span>到手月薪</span>
-              <span className="text-green-600">¥{formatMoney(result.monthly.netPay)}</span>
-            </div>
-          </div>
-
-          {/* 年度个税提示 */}
-          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+          {/* 累计预扣法提示 */}
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
             <strong>累计预扣法：</strong>年度实际个税 ¥{formatMoney(result.annual.tax)}，
             已按照 12 个月分别填写的计税额外收入逐月计算。
           </div>
@@ -269,13 +323,25 @@ export default function Calculator({ onSave }) {
           {onSave && (
             <button
               onClick={handleSave}
-              className="w-full mt-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm"
+              className="w-full py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm"
             >
               保存此次计算
             </button>
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+// 汇总项组件
+function SummaryItem({ label, value, negative = false }) {
+  return (
+    <div className="bg-gray-50 rounded-lg p-3">
+      <p className="text-xs text-gray-500 mb-1">{label}</p>
+      <p className={`font-semibold ${negative ? 'text-red-500' : 'text-gray-800'}`}>
+        {negative ? '-' : ''}¥{formatMoney(value)}
+      </p>
     </div>
   )
 }
