@@ -41,9 +41,12 @@ function LoginForm() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="bg-white p-8 rounded-xl shadow-lg">
+      <div className="dashboard-panel p-8">
         <div className="text-center mb-8">
-          <Link href="/" className="text-2xl font-bold text-emerald-600">💰 NetPay Calc</Link>
+          <Link href="/" className="inline-flex items-center gap-2 text-xl font-bold text-slate-950">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-400 text-slate-950" aria-hidden="true">¥</span>
+            NetPay Calc
+          </Link>
           <h1 className="text-xl font-semibold mt-4">
             {mode === 'login' ? '欢迎回来' : '创建免费账号'}
           </h1>
@@ -66,7 +69,7 @@ function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
+              className="input"
               placeholder="your@email.com"
             />
           </div>
@@ -79,7 +82,7 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
+              className="input"
               placeholder="至少 6 位"
             />
           </div>
@@ -87,7 +90,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition font-medium"
+            className="btn-primary w-full"
           >
             {loading ? '处理中...' : mode === 'login' ? '登录' : '注册'}
           </button>
@@ -113,7 +116,7 @@ function LoginForm() {
       </div>
 
       <div className="mt-4 text-center">
-        <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
+        <Link href="/" className="text-sm text-slate-400 hover:text-white">
           ← 返回首页
         </Link>
       </div>
@@ -123,8 +126,8 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-emerald-50 px-4">
-      <Suspense fallback={<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />}>
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <Suspense fallback={<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400" />}>
         <LoginForm />
       </Suspense>
     </div>

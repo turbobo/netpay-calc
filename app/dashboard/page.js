@@ -72,7 +72,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen text-white">
         <Navbar appName="NetPay Calc" />
         <div className="flex items-center justify-center h-96">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />
@@ -84,40 +84,41 @@ export default function Dashboard() {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen text-white">
       <Navbar appName="NetPay Calc" />
       
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">历史记录</h1>
-          <p className="text-gray-500">查看和对比每次计算结果</p>
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-10">
+        <div className="mb-8">
+          <p className="eyebrow text-emerald-300 mb-2">Saved scenarios</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-white">年度收入工作台</h1>
+          <p className="text-slate-400 mt-1">新建计算，并查看已保存的收入方案</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* 左侧：计算器 */}
+        <div className="space-y-10">
+          {/* 上方：计算器 */}
           <div>
-            <h2 className="font-semibold mb-4 text-gray-700">新建计算</h2>
+            <h2 className="font-semibold mb-4 text-slate-200">新建计算</h2>
             <Calculator onSave={handleSave} />
           </div>
 
-          {/* 右侧：历史记录 */}
+          {/* 下方：历史记录 */}
           <div>
-            <h2 className="font-semibold mb-4 text-gray-700">
+            <h2 className="font-semibold mb-4 text-slate-200">
               历史记录（{history.length}）
             </h2>
             {history.length === 0 ? (
-              <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 text-center">
-                <p className="text-gray-400">暂无记录，在左侧计算后点击"保存"</p>
+              <div className="dashboard-panel p-8 text-center">
+                <p className="text-slate-400">暂无记录，完成计算后点击“保存此次计算”</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                 {history.map((entry) => (
-                  <div key={entry.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                  <div key={entry.id} className="dashboard-panel p-4 text-slate-950">
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <span className="text-sm text-gray-500">{entry.city}</span>
                         {entry.month && (
-                          <span className="text-xs text-indigo-500 ml-2">{entry.month} 月</span>
+                          <span className="text-xs text-emerald-600 ml-2">{entry.month} 月</span>
                         )}
                         <span className="text-xs text-gray-400 ml-2">{entry.date}</span>
                       </div>
@@ -143,7 +144,7 @@ export default function Dashboard() {
                       <div className="text-gray-300">→</div>
                       <div>
                         <p className="text-xs text-gray-400">到手</p>
-                        <p className="font-bold text-green-600">¥{formatMoney(entry.netPay)}</p>
+                        <p className="font-bold text-emerald-600">¥{formatMoney(entry.netPay)}</p>
                       </div>
                       <div className="ml-auto text-right">
                         <p className="text-xs text-gray-400">扣除</p>

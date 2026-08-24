@@ -69,6 +69,19 @@ export default function Calculator({ onSave }) {
     )))
   }
 
+  const applyExtraIncomeToAllMonths = (field) => {
+    const selectedIncome = monthlyExtraIncomes[selectedMonth - 1]
+    setMonthlyExtraIncomes(previous => previous.map(item => (
+      field
+        ? { ...item, [field]: selectedIncome[field] }
+        : { ...selectedIncome }
+    )))
+  }
+
+  const clearAllExtraIncomes = () => {
+    setMonthlyExtraIncomes(createEmptyMonthlyExtraIncomes())
+  }
+
   const selectedExtraIncome = monthlyExtraIncomes[selectedMonth - 1]
 
   const handleSave = () => {
@@ -76,17 +89,25 @@ export default function Calculator({ onSave }) {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full max-w-7xl mx-auto">
       {/* 输入区域 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="dashboard-panel p-5 md:p-7 mb-6">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-2 pb-5 mb-5 border-b border-slate-200">
+          <div>
+            <p className="eyebrow mb-2">Income setup</p>
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-950">收入与扣除设置</h2>
+          </div>
+          <p className="text-sm text-slate-500">修改任意字段后自动重新计算</p>
+        </div>
         {/* 月薪 / 年薪切换 */}
         <div className="flex items-center gap-2 mb-4">
           <label className="block text-sm font-medium text-gray-700">
             {salaryMode === 'monthly' ? '税前月薪（元）' : '税前年薪（元）'}
+            <span className="ml-2 text-xs font-normal text-emerald-600">自动应用 12 个月</span>
           </label>
           <button
             onClick={() => setSalaryMode(prev => prev === 'monthly' ? 'annual' : 'monthly')}
-            className="ml-auto text-xs px-2.5 py-1 rounded-full border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition"
+            className="ml-auto text-xs px-2.5 py-1 rounded-full border border-emerald-200 text-emerald-600 hover:bg-emerald-50 transition"
           >
             切换{salaryMode === 'monthly' ? '年薪' : '月薪'}模式
           </button>
@@ -96,21 +117,21 @@ export default function Calculator({ onSave }) {
           value={salary}
           onChange={(e) => setSalary(e.target.value)}
           placeholder={salaryMode === 'monthly' ? '如 15000' : '如 300000'}
-          className="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+          className="input text-lg font-semibold tabular-nums"
         />
 
         {/* 每月额外收入 */}
-        <div className="mt-4 rounded-lg border border-indigo-100 bg-indigo-50/50 p-4">
-          <div className="flex items-center justify-between gap-4 mb-3">
+        <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 md:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
             <div>
               <h3 className="text-sm font-medium text-gray-700">每月额外收入</h3>
-              <p className="text-xs text-gray-500 mt-0.5">可分别记录奖金、补贴或报销等收入</p>
+              <p className="text-xs text-gray-500 mt-0.5">基础月薪自动应用全年；奖金、补贴和福利可按月设置</p>
             </div>
             <select
               value={selectedMonth}
               onChange={(event) => setSelectedMonth(Number(event.target.value))}
               aria-label="选择额外收入月份"
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
             >
               {MONTH_OPTIONS.map(month => (
                 <option key={month} value={month}>{month} 月</option>
@@ -118,30 +139,66 @@ export default function Calculator({ onSave }) {
             </select>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <label className="block">
-              <span className="block text-sm text-gray-600 mb-1">计税额外收入（元）</span>
+            <div>
+              <div className="flex items-center justify-between gap-2 text-sm text-gray-600 mb-1">
+                <label htmlFor="taxable-extra-income">计税额外收入（元）</label>
+                <button
+                  type="button"
+                  onClick={() => applyExtraIncomeToAllMonths('taxable')}
+                  className="text-xs text-emerald-600 hover:text-emerald-800"
+                >
+                  应用全年
+                </button>
+              </div>
               <input
+                id="taxable-extra-income"
                 type="number"
                 min="0"
                 step="100"
                 value={selectedExtraIncome.taxable}
                 onChange={(event) => updateMonthlyExtraIncome('taxable', event.target.value)}
                 placeholder="如奖金、佣金"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
               />
-            </label>
-            <label className="block">
-              <span className="block text-sm text-gray-600 mb-1">不计税额外收入（元）</span>
+            </div>
+            <div>
+              <div className="flex items-center justify-between gap-2 text-sm text-gray-600 mb-1">
+                <label htmlFor="non-taxable-extra-income">不计税额外收入（元）</label>
+                <button
+                  type="button"
+                  onClick={() => applyExtraIncomeToAllMonths('nonTaxable')}
+                  className="text-xs text-emerald-600 hover:text-emerald-800"
+                >
+                  应用全年
+                </button>
+              </div>
               <input
+                id="non-taxable-extra-income"
                 type="number"
                 min="0"
                 step="100"
                 value={selectedExtraIncome.nonTaxable}
                 onChange={(event) => updateMonthlyExtraIncome('nonTaxable', event.target.value)}
                 placeholder="如报销、免税补贴"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
               />
-            </label>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            <button
+              type="button"
+              onClick={() => applyExtraIncomeToAllMonths()}
+              className="px-3 py-1.5 rounded-md bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition"
+            >
+              将 {selectedMonth} 月全部应用全年
+            </button>
+            <button
+              type="button"
+              onClick={clearAllExtraIncomes}
+              className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-600 text-xs hover:bg-gray-50 transition"
+            >
+              清空全年额外收入
+            </button>
           </div>
           <p className="text-xs text-gray-500 mt-2">计税部分参与累计预扣个税计算；不计税部分仅计入到手收入。</p>
         </div>
@@ -151,7 +208,7 @@ export default function Calculator({ onSave }) {
           <select
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+            className="input"
           >
             {cities.map(c => (
               <option key={c.value} value={c.value}>{c.label}</option>
@@ -163,7 +220,7 @@ export default function Calculator({ onSave }) {
         <div className="mb-4">
           <label className="flex items-center justify-between text-sm font-medium text-gray-700 mb-1">
             <span>住房公积金比例</span>
-            <span className="text-indigo-600 font-semibold">{Math.round(housingRate * 100)}%</span>
+            <span className="text-emerald-600 font-semibold">{Math.round(housingRate * 100)}%</span>
           </label>
           <input
             type="range"
@@ -172,7 +229,7 @@ export default function Calculator({ onSave }) {
             step="0.01"
             value={housingRate}
             onChange={(e) => setHousingRate(parseFloat(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
           />
           <div className="flex justify-between text-xs text-gray-400 mt-1">
             <span>5%</span>
@@ -183,13 +240,13 @@ export default function Calculator({ onSave }) {
         {/* 专项附加扣除 */}
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="text-sm text-indigo-600 hover:underline mb-2"
+          className="text-sm text-emerald-600 hover:underline mb-2"
         >
           {showAdvanced ? '收起' : '展开'}专项附加扣除（可选）
         </button>
 
         {showAdvanced && (
-          <div className="mt-3 p-4 bg-gray-50 rounded-lg">
+          <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
             <p className="text-sm text-gray-600 mb-3">勾选你符合的扣除项目：</p>
             <div className="grid grid-cols-2 gap-2">
               {deductionOptions.map(opt => (
@@ -198,14 +255,14 @@ export default function Calculator({ onSave }) {
                     type="checkbox"
                     checked={selectedDeductions.includes(opt.key)}
                     onChange={() => toggleDeduction(opt.key)}
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                   />
                   <span className="text-sm">{opt.label}（{opt.amount}/月）</span>
                 </label>
               ))}
             </div>
             {specialDeduction > 0 && (
-              <p className="text-sm text-indigo-600 mt-3">专项附加扣除合计：¥{specialDeduction.toLocaleString()}/月</p>
+              <p className="text-sm text-emerald-600 mt-3">专项附加扣除合计：¥{specialDeduction.toLocaleString()}/月</p>
             )}
           </div>
         )}
@@ -215,18 +272,24 @@ export default function Calculator({ onSave }) {
       {result && (
         <div className="space-y-6">
           {/* 年度汇总 */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold mb-4">年度汇总</h3>
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg">
-              <div className="flex items-center gap-6">
-                <div className="flex-1 text-center">
-                  <p className="text-gray-600 mb-1">年到手收入</p>
-                  <p className="text-4xl font-bold text-green-600">¥{formatMoney(result.annual.net)}</p>
-                  <p className="text-sm text-gray-500 mt-2">
+          <div className="dashboard-panel p-5 md:p-7 overflow-hidden">
+            <div className="flex items-center justify-between gap-4 mb-5">
+              <div>
+                <p className="eyebrow mb-1">Annual overview</p>
+                <h3 className="text-xl font-bold text-slate-950">年度汇总</h3>
+              </div>
+              <span className="text-xs text-slate-500">12 个月累计</span>
+            </div>
+            <div className="bg-slate-950 p-5 md:p-7 rounded-xl text-white border border-slate-800">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+                <div className="flex-1 text-left sm:text-center min-w-0">
+                  <p className="text-slate-400 mb-1">年到手收入</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-emerald-400 tabular-nums">¥{formatMoney(result.annual.net)}</p>
+                  <p className="text-sm text-slate-400 mt-2">
                     年总收入 ¥{formatMoney(result.annual.gross)} · 个税 ¥{formatMoney(result.annual.tax)}
                   </p>
                 </div>
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 self-center">
                   <DonutChart
                     netPay={result.annual.net}
                     insurance={result.annual.insurance}
@@ -235,52 +298,74 @@ export default function Calculator({ onSave }) {
                 </div>
               </div>
             </div>
-            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
               <SummaryItem label="年基本工资" value={result.annual.baseSalary} />
               <SummaryItem label="年五险一金" value={result.annual.insurance} negative />
               <SummaryItem label="年个税" value={result.annual.tax} negative />
               <SummaryItem label="计税额外收入" value={result.annual.taxableExtraIncome} />
+              <SummaryItem label="不计税额外收入" value={result.annual.nonTaxableExtraIncome} />
             </div>
           </div>
 
           {/* 12 个月卡片 */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold mb-4">各月明细</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {MONTH_OPTIONS.map(month => {
-                const monthData = result.annual.monthlyBreakdown[month - 1]
-                const extra = result.annual.monthlyExtraIncomes?.[month - 1] || { taxable: 0, nonTaxable: 0 }
-                const gross = result.monthly.baseSalary + extra.taxable + extra.nonTaxable
-                const netPay = Math.round((gross - result.monthly.insurance.total - monthData.tax) * 100) / 100
+          <div className="dashboard-panel p-5 md:p-7">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-5">
+              <div>
+                <p className="eyebrow mb-1">Monthly cash flow</p>
+                <h3 className="text-xl font-bold text-slate-950">12 个月收入明细</h3>
+              </div>
+              <p className="text-xs text-slate-500">点击卡片切换编辑月份</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {result.annual.monthlyResults.map(monthData => {
+                const month = monthData.month
                 const isSelected = selectedMonth === month
                 return (
                   <button
                     key={month}
                     onClick={() => setSelectedMonth(month)}
-                    className={`text-left rounded-xl border p-4 transition hover:shadow-md ${
+                    aria-pressed={isSelected}
+                    aria-label={`查看并编辑 ${month} 月收入`}
+                    className={`text-left min-h-[188px] rounded-xl border p-4 transition focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
                       isSelected
-                        ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500'
-                        : 'border-gray-200 bg-white hover:border-indigo-300'
+                        ? 'border-emerald-500 bg-emerald-950 text-white shadow-lg shadow-emerald-950/20'
+                        : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-emerald-300 hover:shadow-md'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-600">{month} 月</span>
-                      {isSelected && <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">当前</span>}
+                      <span className={`text-sm font-semibold ${isSelected ? 'text-emerald-300' : 'text-slate-600'}`}>{month} 月</span>
+                      {isSelected && <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-400 text-emerald-950 font-semibold">当前</span>}
                     </div>
-                    <p className="text-2xl font-bold text-green-600 mb-3">¥{formatMoney(netPay)}</p>
-                    <div className="space-y-1 text-xs text-gray-500">
+                    <p className={`text-2xl font-bold mb-3 tabular-nums ${isSelected ? 'text-emerald-300' : 'text-emerald-600'}`}>¥{formatMoney(monthData.netPay)}</p>
+                    <div className={`space-y-1 text-xs ${isSelected ? 'text-slate-300' : 'text-slate-500'}`}>
                       <div className="flex justify-between">
                         <span>总收入</span>
-                        <span>¥{formatMoney(gross)}</span>
+                        <span>¥{formatMoney(monthData.gross)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>五险一金</span>
-                        <span className="text-red-500">-¥{formatMoney(result.monthly.insurance.total)}</span>
+                        <span className="text-red-500">-¥{formatMoney(monthData.insurance.total)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>个税</span>
                         <span className="text-red-500">-¥{formatMoney(monthData.tax)}</span>
                       </div>
+                      {(monthData.taxableExtraIncome > 0 || monthData.nonTaxableExtraIncome > 0) && (
+                        <div className={`pt-2 mt-2 border-t space-y-1 ${isSelected ? 'border-white/10' : 'border-slate-200'}`}>
+                          {monthData.taxableExtraIncome > 0 && (
+                            <div className="flex justify-between text-emerald-600">
+                              <span>计税额外</span>
+                              <span>+¥{formatMoney(monthData.taxableExtraIncome)}</span>
+                            </div>
+                          )}
+                          {monthData.nonTaxableExtraIncome > 0 && (
+                            <div className="flex justify-between text-emerald-600">
+                              <span>不计税额外</span>
+                              <span>+¥{formatMoney(monthData.nonTaxableExtraIncome)}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </button>
                 )
@@ -290,8 +375,14 @@ export default function Calculator({ onSave }) {
           </div>
 
           {/* 当前月份明细 */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold mb-4">{result.monthly.month} 月明细</h3>
+          <div className="dashboard-panel p-5 md:p-7">
+            <div className="flex items-center justify-between gap-4 mb-5">
+              <div>
+                <p className="eyebrow mb-1">Selected month</p>
+                <h3 className="text-xl font-bold text-slate-950">{result.monthly.month} 月完整明细</h3>
+              </div>
+              <span className="text-sm font-semibold text-emerald-600">到手 ¥{formatMoney(result.monthly.netPay)}</span>
+            </div>
             <div className="space-y-3">
               <DetailRow label="基础税前月薪" value={result.monthly.baseSalary} />
               {result.monthly.taxableExtraIncome > 0 && (
@@ -308,14 +399,14 @@ export default function Calculator({ onSave }) {
               <DetailRow label="五险一金合计" value={result.monthly.insurance.total} negative bold />
               <DetailRow label="个人所得税" value={result.monthly.tax} negative bold />
               <div className="flex justify-between py-2 font-semibold text-lg border-t-2 border-gray-200 mt-2 pt-3">
-                <span>到手月薪</span>
-                <span className="text-green-600">¥{formatMoney(result.monthly.netPay)}</span>
+                <span className="text-emerald-600">到手月薪</span>
+                <span className="text-emerald-600 tabular-nums">¥{formatMoney(result.monthly.netPay)}</span>
               </div>
             </div>
           </div>
 
           {/* 累计预扣法提示 */}
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-900">
             <strong>累计预扣法：</strong>年度实际个税 ¥{formatMoney(result.annual.tax)}，
             已按照 12 个月分别填写的计税额外收入逐月计算。
           </div>
@@ -323,7 +414,7 @@ export default function Calculator({ onSave }) {
           {onSave && (
             <button
               onClick={handleSave}
-              className="w-full py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm"
+              className="btn-secondary w-full"
             >
               保存此次计算
             </button>
@@ -337,7 +428,7 @@ export default function Calculator({ onSave }) {
 // 汇总项组件
 function SummaryItem({ label, value, negative = false }) {
   return (
-    <div className="bg-gray-50 rounded-lg p-3">
+    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
       <p className="text-xs text-gray-500 mb-1">{label}</p>
       <p className={`font-semibold ${negative ? 'text-red-500' : 'text-gray-800'}`}>
         {negative ? '-' : ''}¥{formatMoney(value)}
@@ -397,8 +488,8 @@ function DonutChart({ netPay, insurance, tax }) {
         strokeDashoffset={-offset3}
         transform="rotate(-90 50 50)" />
       {/* 中心百分比 */}
-      <text x={cx} y={cy - 4} textAnchor="middle" className="text-[10px] fill-gray-500">到手</text>
-      <text x={cx} y={cy + 10} textAnchor="middle" className="text-[13px] font-bold fill-gray-800">
+      <text x={cx} y={cy - 4} textAnchor="middle" className="text-[10px] fill-slate-400">到手</text>
+      <text x={cx} y={cy + 10} textAnchor="middle" className="text-[13px] font-bold fill-white">
         {Math.round(pctNet * 100)}%
       </text>
     </svg>
