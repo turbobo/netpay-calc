@@ -4,6 +4,9 @@
   "description": "税后工资计算器 - 快速算出到手收入，支持五险一金和个税专项扣除",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20 <21"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
