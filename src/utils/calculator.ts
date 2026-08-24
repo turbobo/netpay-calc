@@ -23,16 +23,16 @@ const ANNUAL_TAX_BRACKETS = [
   { min: 960000, max: Infinity, rate: 0.45, deduction: 181920 },
 ]
 
-// 五险一金缴纳比例（个人部分，可按城市调整）
+// 五险一金缴纳比例（个人部分）
 const INSURANCE_RATES = {
-  pension: 0.08,       // 养老保险 8%
-  medical: 0.02,       // 医疗保险 2%
-  unemployment: 0.005, // 失业保险 0.5%
-  housing: 0.07,       // 住房公积金 7%（各地不同，默认7%）
+  pension: 0.08,
+  medical: 0.02,
+  unemployment: 0.005,
+  housing: 0.07,
 }
 
 // 各城市五险一金缴费基数上下限（2024 年参考值）
-const CITY_LIMITS = {
+const CITY_LIMITS: Record<string, { min: number; max: number; label: string; housingRate: number }> = {
   beijing: { min: 6326, max: 35283, label: '北京', housingRate: 0.12 },
   shanghai: { min: 7310, max: 36549, label: '上海', housingRate: 0.07 },
   guangzhou: { min: 5500, max: 27501, label: '广州', housingRate: 0.12 },
@@ -45,27 +45,68 @@ const CITY_LIMITS = {
 }
 
 // 专项附加扣除标准（月）
-const SPECIAL_DEDUCTIONS = {
-  childEducation: 2000,   // 子女教育 2000/子女/月
-  continuingEducation: 400, // 继续教育 400/月
-  housingLoan: 1000,      // 住房贷款利息 1000/月
-  housingRent: 1500,      // 住房租金 1500/月（按城市不同）
-  elderlyCare: 3000,      // 赡养老人 3000/月
-  childCare: 2000,        // 3岁以下婴幼儿照护 2000/子女/月
+const SPECIAL_DEDUCTIONS: Record<string, number> = {
+  childEducation: 2000,
+  continuingEducation: 400,
+  housingLoan: 1000,
+  housingRent: 1500,
+  elderlyCare: 3000,
+  childCare: 2000,
 }
 
-/**
- * 计算五险一金
- * @param {number} salary - 税前月薪
- * @param {string} city - 城市代码
- * @param {object} customRates - 自定义缴纳比例
- * @returns {object} 五险一金明细
- */
-export function calculateInsurance(salary, city = 'default', customRates = {}) {
+// Types
+export interface InsuranceResult {
+  base: number
+  pension: number
+  medical: number
+  unemployment: number
+  housing: number
+  total: number
+  rates: typeof INSURANCE_RATES & { housing: number }
+}
+
+export interface MonthResult {
+  month: number
+  baseSalary: number
+  gross: number
+  taxableExtraIncome: number
+  nonTaxableExtraIncome: number
+  insurance: InsuranceResult
+  tax: number
+  taxableIncome: number
+  netPay: number
+}
+
+export interface CalcResult {
+  monthly: MonthResult
+  annual: {
+    baseSalary: number
+    taxableExtraIncome: number
+    nonTaxableExtraIncome: number
+    monthlyExtraIncomes: { taxable: number; nonTaxable: number }[]
+    monthlyResults: MonthResult[]
+    gross: number
+    insurance: number
+    tax: number
+    net: number
+    monthlyBreakdown: { month: number; taxableIncome: number; tax: number; cumulativeTax: number }[]
+  }
+  cityInfo: { min: number; max: number; label: string; housingRate: number }
+}
+
+interface CalcParams {
+  salary: number
+  city?: string
+  specialDeduction?: number
+  customRates?: { housing?: number }
+  monthlyExtraIncomes?: { taxable?: string | number; nonTaxable?: string | number }[]
+  selectedMonth?: number
+}
+
+// 计算五险一金
+export function calculateInsurance(salary: number, city = 'default', customRates: { housing?: number } = {}): InsuranceResult {
   const cityConfig = CITY_LIMITS[city] || CITY_LIMITS.default
   const rates = { ...INSURANCE_RATES, housing: cityConfig.housingRate, ...customRates }
-
-  // 缴费基数：clamp 到上下限之间
   const base = Math.max(cityConfig.min, Math.min(salary, cityConfig.max))
 
   const pension = Math.round(base * rates.pension * 100) / 100
@@ -84,30 +125,10 @@ export function calculateInsurance(salary, city = 'default', customRates = {}) {
   }
 }
 
-/**
- * 计算个人所得税（单月，用于快速估算）
- * @param {number} taxableIncome - 应纳税所得额（月）
- * @returns {object} 个税明细
- */
-export function calculateTax(taxableIncome) {
-  if (taxableIncome <= 0) return { tax: 0, bracket: null }
-
-  const bracket = TAX_BRACKETS.find(b => taxableIncome > b.min && taxableIncome <= b.max)
-    || TAX_BRACKETS[TAX_BRACKETS.length - 1]
-
-  const tax = Math.round((taxableIncome * bracket.rate - bracket.deduction) * 100) / 100
-  return { tax: Math.max(0, tax), bracket }
-}
-
 const MONTH_COUNT = 12
 const TAX_THRESHOLD = 5000
 
-/**
- * 标准化每月额外收入，缺失或非法值按 0 处理。
- * @param {Array<{taxable?: number, nonTaxable?: number}>} monthlyExtraIncomes
- * @returns {Array<{taxable: number, nonTaxable: number}>}
- */
-function normalizeMonthlyExtraIncomes(monthlyExtraIncomes = []) {
+function normalizeMonthlyExtraIncomes(monthlyExtraIncomes: { taxable?: string | number; nonTaxable?: string | number }[] = []) {
   return Array.from({ length: MONTH_COUNT }, (_, index) => {
     const item = monthlyExtraIncomes[index] || {}
     return {
@@ -117,14 +138,8 @@ function normalizeMonthlyExtraIncomes(monthlyExtraIncomes = []) {
   })
 }
 
-/**
- * 累计预扣法：按每月实际应纳税所得额计算全年个税。
- * 中国个税按“累计应纳税所得额”查年度税率表，每月应缴 = 累计应缴 - 前几月已缴。
- * @param {number[]} monthlyTaxableIncomes - 12 个月分别对应的应纳税所得额
- * @returns {object} { months: [{month, taxableIncome, tax, cumulativeTax}], annualTax }
- */
-function calculateAnnualTaxCumulative(monthlyTaxableIncomes) {
-  const months = []
+function calculateAnnualTaxCumulative(monthlyTaxableIncomes: number[]) {
+  const months: { month: number; taxableIncome: number; tax: number; cumulativeTax: number }[] = []
   let cumulativeTaxableIncome = 0
   let cumulativeTaxPaid = 0
 
@@ -135,10 +150,7 @@ function calculateAnnualTaxCumulative(monthlyTaxableIncomes) {
       item => cumulativeTaxableIncome > item.min && cumulativeTaxableIncome <= item.max,
     ) || ANNUAL_TAX_BRACKETS[ANNUAL_TAX_BRACKETS.length - 1]
 
-    const cumulativeTaxDue = Math.max(
-      0,
-      cumulativeTaxableIncome * bracket.rate - bracket.deduction,
-    )
+    const cumulativeTaxDue = Math.max(0, cumulativeTaxableIncome * bracket.rate - bracket.deduction)
     const monthTax = Math.round((cumulativeTaxDue - cumulativeTaxPaid) * 100) / 100
     cumulativeTaxPaid = cumulativeTaxDue
 
@@ -153,17 +165,7 @@ function calculateAnnualTaxCumulative(monthlyTaxableIncomes) {
   return { months, annualTax: Math.round(cumulativeTaxPaid * 100) / 100 }
 }
 
-/**
- * 主计算函数：输入税前工资，输出税后到手收入
- * @param {object} params
- * @param {number} params.salary - 税前月薪
- * @param {string} params.city - 城市
- * @param {number} params.specialDeduction - 专项附加扣除合计
- * @param {object} params.customRates - 自定义缴纳比例
- * @param {Array<{taxable?: number, nonTaxable?: number}>} params.monthlyExtraIncomes - 每月额外收入
- * @param {number} params.selectedMonth - 当前查看月份（1-12）
- * @returns {object} 完整计算结果
- */
+// 主计算函数
 export function calculateNetPay({
   salary,
   city = 'default',
@@ -171,7 +173,7 @@ export function calculateNetPay({
   customRates = {},
   monthlyExtraIncomes = [],
   selectedMonth = 1,
-}) {
+}: CalcParams): CalcResult {
   const insurance = calculateInsurance(salary, city, customRates)
   const normalizedExtraIncomes = normalizeMonthlyExtraIncomes(monthlyExtraIncomes)
   const safeSelectedMonth = Math.min(MONTH_COUNT, Math.max(1, Number(selectedMonth) || 1))
@@ -180,7 +182,7 @@ export function calculateNetPay({
     item => Math.max(0, taxableBaseBeforeExtra + item.taxable),
   )
   const annualTaxResult = calculateAnnualTaxCumulative(monthlyTaxableIncomes)
-  const monthlyResults = annualTaxResult.months.map((taxResult, index) => {
+  const monthlyResults: MonthResult[] = annualTaxResult.months.map((taxResult, index) => {
     const extraIncome = normalizedExtraIncomes[index]
     const gross = salary + extraIncome.taxable + extraIncome.nonTaxable
     return {
@@ -197,14 +199,8 @@ export function calculateNetPay({
   })
   const selectedMonthResult = monthlyResults[safeSelectedMonth - 1]
 
-  const annualTaxableExtraIncome = normalizedExtraIncomes.reduce(
-    (total, item) => total + item.taxable,
-    0,
-  )
-  const annualNonTaxableExtraIncome = normalizedExtraIncomes.reduce(
-    (total, item) => total + item.nonTaxable,
-    0,
-  )
+  const annualTaxableExtraIncome = normalizedExtraIncomes.reduce((total, item) => total + item.taxable, 0)
+  const annualNonTaxableExtraIncome = normalizedExtraIncomes.reduce((total, item) => total + item.nonTaxable, 0)
   const annualBaseSalary = salary * MONTH_COUNT
   const annualGross = annualBaseSalary + annualTaxableExtraIncome + annualNonTaxableExtraIncome
   const annualInsurance = Math.round(insurance.total * MONTH_COUNT * 100) / 100
@@ -229,19 +225,10 @@ export function calculateNetPay({
   }
 }
 
-// 导出城市列表（排除内部 default）
 export function getCityList() {
   return Object.entries(CITY_LIMITS)
     .filter(([key]) => key !== 'default')
-    .map(([key, value]) => ({
-      value: key,
-      label: value.label,
-    }))
-}
-
-// 导出专项附加扣除选项（带 label，供 UI 直接使用）
-export function getSpecialDeductions() {
-  return SPECIAL_DEDUCTIONS
+    .map(([key, value]) => ({ value: key, label: value.label }))
 }
 
 export function getDeductionOptions() {
@@ -255,7 +242,6 @@ export function getDeductionOptions() {
   ]
 }
 
-// 格式化金额
-export function formatMoney(amount) {
+export function formatMoney(amount: number): string {
   return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }

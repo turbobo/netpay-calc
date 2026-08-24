@@ -1,7 +1,8 @@
 node_modules/
-.next/
-out/
+dist/
 .env.local
 .env*.local
 .DS_Store
 *.log
+_old_*
+tsconfig.tsbuildinfo

@@ -26,22 +26,19 @@ cp .env.example .env.local
 
 # 启动开发服务器
 npm run dev
-# 打开 http://localhost:3000
+# 打开 http://localhost:5173
 ```
 
 ## 部署
 
-```bash
-# 推送到 GitHub
-git init && git add . && git commit -m "init"
-git push origin main
+推送到 GitHub 后，EdgeOne Pages 自动构建部署：
 
-# 去 vercel.com 导入仓库 → 添加环境变量 → Deploy
-```
+- 构建命令：`npm run build`
+- 输出目录：`dist`
 
 ## 技术栈
 
-- Next.js 14 (App Router)
-- Tailwind CSS
-- Supabase (Auth + PostgreSQL)
-- 部署：Vercel（免费）
+- Vite 5 + React 18 + TypeScript 5
+- Tailwind CSS 3.4
+- Supabase (Auth)
+- 部署：EdgeOne Pages

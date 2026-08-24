@@ -1,32 +1,46 @@
-'use client'
-
 import { useState, useEffect } from 'react'
-import { auth } from '../../lib/supabase'
-import { useRouter } from 'next/navigation'
-import Navbar from '../../components/Navbar'
-import Calculator from '../../components/Calculator'
-import { formatMoney } from '../../lib/calculator'
+import type { User } from '@supabase/supabase-js'
+import { auth } from '../utils/supabase'
+import { useHashRoute } from '../hooks/useHashRoute'
+import Navbar from '../components/Navbar'
+import Calculator from '../components/Calculator'
+import { formatMoney } from '../utils/calculator'
+import type { CalcResult } from '../utils/calculator'
 
-export default function Dashboard() {
-  const router = useRouter()
-  const [user, setUser] = useState(null)
+interface HistoryEntry {
+  id: number
+  date: string
+  city: string
+  month: number
+  baseSalary: number
+  taxableExtraIncome: number
+  nonTaxableExtraIncome: number
+  gross: number
+  netPay: number
+  insurance: number
+  tax: number
+}
+
+export default function DashboardPage() {
+  const { navigate } = useHashRoute()
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [history, setHistory] = useState([])
+  const [history, setHistory] = useState<HistoryEntry[]>([])
 
   useEffect(() => {
     auth.getUser().then(({ user }) => {
       if (!user) {
-        router.push('/login')
+        navigate('/login')
       } else {
         setUser(user)
         loadHistory(user.id)
       }
       setLoading(false)
     })
-  }, [router])
+  }, [navigate])
 
-  const loadHistory = (userId) => {
-    const saved = []
+  const loadHistory = (userId: string) => {
+    const saved: HistoryEntry[] = []
     try {
       const raw = localStorage.getItem(`netpay_history_${userId}`)
       if (raw) saved.push(...JSON.parse(raw))
@@ -36,9 +50,9 @@ export default function Dashboard() {
     setHistory(saved)
   }
 
-  const handleSave = (result) => {
+  const handleSave = (result: CalcResult) => {
     if (!user) return
-    const entry = {
+    const entry: HistoryEntry = {
       id: Date.now(),
       date: new Date().toLocaleString('zh-CN'),
       city: result.cityInfo.label,
@@ -54,17 +68,17 @@ export default function Dashboard() {
     const updated = [entry, ...history]
     setHistory(updated)
     try {
-      localStorage.setItem(`netpay_history_${user.id}`, JSON.stringify(updated))
+      localStorage.setItem(`netpay_history_${user!.id}`, JSON.stringify(updated))
     } catch (e) {
       console.error('保存失败', e)
     }
   }
 
-  const handleDelete = (id) => {
+  const handleDelete = (id: number) => {
     const updated = history.filter(h => h.id !== id)
     setHistory(updated)
     try {
-      localStorage.setItem(`netpay_history_${user.id}`, JSON.stringify(updated))
+      localStorage.setItem(`netpay_history_${user!.id}`, JSON.stringify(updated))
     } catch (e) {
       console.error('删除失败', e)
     }
@@ -86,7 +100,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen text-white">
       <Navbar appName="NetPay Calc" />
-      
+
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-10">
         <div className="mb-8">
           <p className="eyebrow text-emerald-300 mb-2">Saved scenarios</p>
@@ -95,20 +109,20 @@ export default function Dashboard() {
         </div>
 
         <div className="space-y-10">
-          {/* 上方：计算器 */}
+          {/* Calculator */}
           <div>
             <h2 className="font-semibold mb-4 text-slate-200">新建计算</h2>
             <Calculator onSave={handleSave} />
           </div>
 
-          {/* 下方：历史记录 */}
+          {/* History */}
           <div>
             <h2 className="font-semibold mb-4 text-slate-200">
               历史记录（{history.length}）
             </h2>
             {history.length === 0 ? (
               <div className="dashboard-panel p-8 text-center">
-                <p className="text-slate-400">暂无记录，完成计算后点击“保存此次计算”</p>
+                <p className="text-slate-400">暂无记录，完成计算后点击"保存此次计算"</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">

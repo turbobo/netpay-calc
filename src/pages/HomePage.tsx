@@ -1,16 +1,15 @@
-'use client'
-
 import { useState } from 'react'
 import Navbar from '../components/Navbar'
 import Calculator from '../components/Calculator'
+import type { User } from '@supabase/supabase-js'
 
-export default function Home() {
-  const [user, setUser] = useState(null)
+export default function HomePage() {
+  const [user, setUser] = useState<User | null>(null)
 
   return (
     <div className="min-h-screen text-slate-950">
       <Navbar appName="NetPay Calc" onUserChange={setUser} />
-      
+
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-10 md:py-14">
         {/* Hero */}
         <div className="mb-8 md:mb-10 max-w-3xl">
@@ -24,7 +23,7 @@ export default function Home() {
         </div>
 
         {/* Calculator */}
-        <Calculator onSave={user ? () => {} : null} />
+        <Calculator onSave={user ? () => {} : undefined} />
 
         {/* Features */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-10">
@@ -50,7 +49,7 @@ export default function Home() {
           <div className="text-center mt-10 py-7 px-5 border border-white/10 bg-white/[0.06] rounded-xl text-white">
             <h3 className="text-xl font-semibold mb-2">保存你的年度收入方案</h3>
             <p className="text-slate-400 mb-4">免费创建账号，保存每次计算结果，随时查看对比</p>
-            <a href="/login?mode=signup" className="btn-primary">
+            <a href="#/login?mode=signup" className="btn-primary">
               免费注册
             </a>
           </div>

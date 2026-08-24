@@ -1,7 +1,6 @@
-'use client'
-
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { calculateNetPay, getCityList, getDeductionOptions, formatMoney } from '../lib/calculator'
+import { calculateNetPay, getCityList, getDeductionOptions, formatMoney } from '../utils/calculator'
+import type { CalcResult } from '../utils/calculator'
 
 const MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) => index + 1)
 
@@ -9,28 +8,32 @@ function createEmptyMonthlyExtraIncomes() {
   return MONTH_OPTIONS.map(() => ({ taxable: '', nonTaxable: '' }))
 }
 
-export default function Calculator({ onSave }) {
+interface CalculatorProps {
+  onSave?: (result: CalcResult) => void
+}
+
+export default function Calculator({ onSave }: CalculatorProps) {
   const [salary, setSalary] = useState('')
-  const [salaryMode, setSalaryMode] = useState('monthly') // 'monthly' | 'annual'
+  const [salaryMode, setSalaryMode] = useState<'monthly' | 'annual'>('monthly')
   const [city, setCity] = useState('beijing')
-  const [housingRate, setHousingRate] = useState(0.12) // 公积金比例
+  const [housingRate, setHousingRate] = useState(0.12)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [specialDeduction, setSpecialDeduction] = useState(0)
-  const [selectedDeductions, setSelectedDeductions] = useState([])
+  const [selectedDeductions, setSelectedDeductions] = useState<string[]>([])
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth() + 1)
   const [monthlyExtraIncomes, setMonthlyExtraIncomes] = useState(createEmptyMonthlyExtraIncomes)
-  const [result, setResult] = useState(null)
+  const [result, setResult] = useState<CalcResult | null>(null)
 
   const cities = useMemo(() => getCityList(), [])
   const deductionOptions = useMemo(() => getDeductionOptions(), [])
 
-  // 城市变化时同步默认公积金比例
+  // Sync housing rate when city changes
   useEffect(() => {
-    const cityRates = { beijing: 0.12, shanghai: 0.07, guangzhou: 0.12, shenzhen: 0.05, hangzhou: 0.12, chengdu: 0.12, nanjing: 0.12, wuhan: 0.12 }
+    const cityRates: Record<string, number> = { beijing: 0.12, shanghai: 0.07, guangzhou: 0.12, shenzhen: 0.05, hangzhou: 0.12, chengdu: 0.12, nanjing: 0.12, wuhan: 0.12 }
     setHousingRate(cityRates[city] || 0.07)
   }, [city])
 
-  // 专项扣除合计
+  // Sum selected deductions
   useEffect(() => {
     const total = selectedDeductions.reduce((sum, key) => {
       const opt = deductionOptions.find(o => o.key === key)
@@ -39,12 +42,12 @@ export default function Calculator({ onSave }) {
     setSpecialDeduction(total)
   }, [selectedDeductions, deductionOptions])
 
-  // 实时计算
+  // Real-time calculation
   const doCalculate = useCallback(() => {
     const raw = parseFloat(salary)
     if (isNaN(raw) || raw <= 0) { setResult(null); return }
     const monthlySalary = salaryMode === 'annual' ? raw / 12 : raw
-    const result = calculateNetPay({
+    const calcResult = calculateNetPay({
       salary: monthlySalary,
       city,
       specialDeduction,
@@ -52,24 +55,24 @@ export default function Calculator({ onSave }) {
       monthlyExtraIncomes,
       selectedMonth,
     })
-    setResult(result)
+    setResult(calcResult)
   }, [salary, salaryMode, city, specialDeduction, housingRate, monthlyExtraIncomes, selectedMonth])
 
   useEffect(() => { doCalculate() }, [doCalculate])
 
-  const toggleDeduction = (key) => {
+  const toggleDeduction = (key: string) => {
     setSelectedDeductions(prev =>
       prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
     )
   }
 
-  const updateMonthlyExtraIncome = (field, value) => {
+  const updateMonthlyExtraIncome = (field: 'taxable' | 'nonTaxable', value: string) => {
     setMonthlyExtraIncomes(previous => previous.map((item, index) => (
       index === selectedMonth - 1 ? { ...item, [field]: value } : item
     )))
   }
 
-  const applyExtraIncomeToAllMonths = (field) => {
+  const applyExtraIncomeToAllMonths = (field?: 'taxable' | 'nonTaxable') => {
     const selectedIncome = monthlyExtraIncomes[selectedMonth - 1]
     setMonthlyExtraIncomes(previous => previous.map(item => (
       field
@@ -90,7 +93,7 @@ export default function Calculator({ onSave }) {
 
   return (
     <div className="w-full max-w-7xl mx-auto">
-      {/* 输入区域 */}
+      {/* Input area */}
       <div className="dashboard-panel p-5 md:p-7 mb-6">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-2 pb-5 mb-5 border-b border-slate-200">
           <div>
@@ -99,7 +102,8 @@ export default function Calculator({ onSave }) {
           </div>
           <p className="text-sm text-slate-500">修改任意字段后自动重新计算</p>
         </div>
-        {/* 月薪 / 年薪切换 */}
+
+        {/* Salary mode toggle */}
         <div className="flex items-center gap-2 mb-4">
           <label className="block text-sm font-medium text-gray-700">
             {salaryMode === 'monthly' ? '税前月薪（元）' : '税前年薪（元）'}
@@ -120,7 +124,7 @@ export default function Calculator({ onSave }) {
           className="input text-lg font-semibold tabular-nums"
         />
 
-        {/* 每月额外收入 */}
+        {/* Monthly extra income */}
         <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 md:p-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
             <div>
@@ -142,11 +146,7 @@ export default function Calculator({ onSave }) {
             <div>
               <div className="flex items-center justify-between gap-2 text-sm text-gray-600 mb-1">
                 <label htmlFor="taxable-extra-income">计税额外收入（元）</label>
-                <button
-                  type="button"
-                  onClick={() => applyExtraIncomeToAllMonths('taxable')}
-                  className="text-xs text-emerald-600 hover:text-emerald-800"
-                >
+                <button type="button" onClick={() => applyExtraIncomeToAllMonths('taxable')} className="text-xs text-emerald-600 hover:text-emerald-800">
                   应用全年
                 </button>
               </div>
@@ -164,11 +164,7 @@ export default function Calculator({ onSave }) {
             <div>
               <div className="flex items-center justify-between gap-2 text-sm text-gray-600 mb-1">
                 <label htmlFor="non-taxable-extra-income">不计税额外收入（元）</label>
-                <button
-                  type="button"
-                  onClick={() => applyExtraIncomeToAllMonths('nonTaxable')}
-                  className="text-xs text-emerald-600 hover:text-emerald-800"
-                >
+                <button type="button" onClick={() => applyExtraIncomeToAllMonths('nonTaxable')} className="text-xs text-emerald-600 hover:text-emerald-800">
                   应用全年
                 </button>
               </div>
@@ -185,38 +181,27 @@ export default function Calculator({ onSave }) {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 mt-3">
-            <button
-              type="button"
-              onClick={() => applyExtraIncomeToAllMonths()}
-              className="px-3 py-1.5 rounded-md bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition"
-            >
+            <button type="button" onClick={() => applyExtraIncomeToAllMonths()} className="px-3 py-1.5 rounded-md bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition">
               将 {selectedMonth} 月全部应用全年
             </button>
-            <button
-              type="button"
-              onClick={clearAllExtraIncomes}
-              className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-600 text-xs hover:bg-gray-50 transition"
-            >
+            <button type="button" onClick={clearAllExtraIncomes} className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-600 text-xs hover:bg-gray-50 transition">
               清空全年额外收入
             </button>
           </div>
           <p className="text-xs text-gray-500 mt-2">计税部分参与累计预扣个税计算；不计税部分仅计入到手收入。</p>
         </div>
 
+        {/* City */}
         <div className="mt-4 mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">所在城市</label>
-          <select
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            className="input"
-          >
+          <select value={city} onChange={(e) => setCity(e.target.value)} className="input">
             {cities.map(c => (
               <option key={c.value} value={c.value}>{c.label}</option>
             ))}
           </select>
         </div>
 
-        {/* 公积金比例滑块 */}
+        {/* Housing fund slider */}
         <div className="mb-4">
           <label className="flex items-center justify-between text-sm font-medium text-gray-700 mb-1">
             <span>住房公积金比例</span>
@@ -237,11 +222,8 @@ export default function Calculator({ onSave }) {
           </div>
         </div>
 
-        {/* 专项附加扣除 */}
-        <button
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="text-sm text-emerald-600 hover:underline mb-2"
-        >
+        {/* Special deductions */}
+        <button onClick={() => setShowAdvanced(!showAdvanced)} className="text-sm text-emerald-600 hover:underline mb-2">
           {showAdvanced ? '收起' : '展开'}专项附加扣除（可选）
         </button>
 
@@ -268,10 +250,10 @@ export default function Calculator({ onSave }) {
         )}
       </div>
 
-      {/* 结果区域 */}
+      {/* Results */}
       {result && (
         <div className="space-y-6">
-          {/* 年度汇总 */}
+          {/* Annual summary */}
           <div className="dashboard-panel p-5 md:p-7 overflow-hidden">
             <div className="flex items-center justify-between gap-4 mb-5">
               <div>
@@ -290,11 +272,7 @@ export default function Calculator({ onSave }) {
                   </p>
                 </div>
                 <div className="flex-shrink-0 self-center">
-                  <DonutChart
-                    netPay={result.annual.net}
-                    insurance={result.annual.insurance}
-                    tax={result.annual.tax}
-                  />
+                  <DonutChart netPay={result.annual.net} insurance={result.annual.insurance} tax={result.annual.tax} />
                 </div>
               </div>
             </div>
@@ -307,7 +285,7 @@ export default function Calculator({ onSave }) {
             </div>
           </div>
 
-          {/* 12 个月卡片 */}
+          {/* 12 month cards */}
           <div className="dashboard-panel p-5 md:p-7">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-5">
               <div>
@@ -374,7 +352,7 @@ export default function Calculator({ onSave }) {
             <p className="text-xs text-gray-500 mt-4">点击卡片可切换到对应月份，编辑该月额外收入。</p>
           </div>
 
-          {/* 当前月份明细 */}
+          {/* Current month detail */}
           <div className="dashboard-panel p-5 md:p-7">
             <div className="flex items-center justify-between gap-4 mb-5">
               <div>
@@ -405,17 +383,14 @@ export default function Calculator({ onSave }) {
             </div>
           </div>
 
-          {/* 累计预扣法提示 */}
+          {/* Tax note */}
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-900">
             <strong>累计预扣法：</strong>年度实际个税 ¥{formatMoney(result.annual.tax)}，
             已按照 12 个月分别填写的计税额外收入逐月计算。
           </div>
 
           {onSave && (
-            <button
-              onClick={handleSave}
-              className="btn-secondary w-full"
-            >
+            <button onClick={handleSave} className="btn-secondary w-full">
               保存此次计算
             </button>
           )}
@@ -425,8 +400,7 @@ export default function Calculator({ onSave }) {
   )
 }
 
-// 汇总项组件
-function SummaryItem({ label, value, negative = false }) {
+function SummaryItem({ label, value, negative = false }: { label: string; value: number; negative?: boolean }) {
   return (
     <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
       <p className="text-xs text-gray-500 mb-1">{label}</p>
@@ -437,8 +411,7 @@ function SummaryItem({ label, value, negative = false }) {
   )
 }
 
-// 明细行组件
-function DetailRow({ label, value, negative = false, bold = false }) {
+function DetailRow({ label, value, negative = false, bold = false }: { label: string; value: number; negative?: boolean; bold?: boolean }) {
   return (
     <div className={`flex justify-between py-2 border-b border-gray-100 ${bold ? 'font-medium' : ''}`}>
       <span className="text-gray-600">{label}</span>
@@ -449,45 +422,30 @@ function DetailRow({ label, value, negative = false, bold = false }) {
   )
 }
 
-// 简易 SVG 环形图
-function DonutChart({ netPay, insurance, tax }) {
+function DonutChart({ netPay, insurance, tax }: { netPay: number; insurance: number; tax: number }) {
   const total = netPay + insurance + tax
   if (total <= 0) return null
 
   const pctNet = netPay / total
   const pctIns = insurance / total
-  // pctTax is the remainder
 
   const r = 40
   const cx = 50
   const cy = 50
   const circumference = 2 * Math.PI * r
 
-  const offset1 = 0
   const len1 = circumference * pctNet
-  const offset2 = len1
   const len2 = circumference * pctIns
-  const offset3 = offset2 + len2
   const len3 = circumference - len1 - len2
 
   return (
     <svg width="100" height="100" viewBox="0 0 100 100" className="drop-shadow-sm">
-      {/* 到手 - 绿 */}
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="#22c55e" strokeWidth="14"
-        strokeDasharray={`${len1} ${circumference - len1}`}
-        strokeDashoffset={-offset1}
-        transform="rotate(-90 50 50)" />
-      {/* 五险一金 - 橙 */}
+        strokeDasharray={`${len1} ${circumference - len1}`} strokeDashoffset={0} transform="rotate(-90 50 50)" />
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f59e0b" strokeWidth="14"
-        strokeDasharray={`${len2} ${circumference - len2}`}
-        strokeDashoffset={-offset2}
-        transform="rotate(-90 50 50)" />
-      {/* 个税 - 红 */}
+        strokeDasharray={`${len2} ${circumference - len2}`} strokeDashoffset={-len1} transform="rotate(-90 50 50)" />
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="#ef4444" strokeWidth="14"
-        strokeDasharray={`${len3} ${circumference - len3}`}
-        strokeDashoffset={-offset3}
-        transform="rotate(-90 50 50)" />
-      {/* 中心百分比 */}
+        strokeDasharray={`${len3} ${circumference - len3}`} strokeDashoffset={-(len1 + len2)} transform="rotate(-90 50 50)" />
       <text x={cx} y={cy - 4} textAnchor="middle" className="text-[10px] fill-slate-400">到手</text>
       <text x={cx} y={cy + 10} textAnchor="middle" className="text-[13px] font-bold fill-white">
         {Math.round(pctNet * 100)}%
