@@ -62,7 +62,7 @@ export interface InsuranceResult {
   unemployment: number
   housing: number
   total: number
-  rates: typeof INSURANCE_RATES & { housing: number }
+  rates: { pension: number; medical: number; unemployment: number; housing: number }
 }
 
 export interface MonthResult {
@@ -98,13 +98,13 @@ interface CalcParams {
   salary: number
   city?: string
   specialDeduction?: number
-  customRates?: { housing?: number }
+  customRates?: { pension?: number; medical?: number; unemployment?: number; housing?: number }
   monthlyExtraIncomes?: { taxable?: string | number; nonTaxable?: string | number }[]
   selectedMonth?: number
 }
 
 // 计算五险一金
-export function calculateInsurance(salary: number, city = 'default', customRates: { housing?: number } = {}): InsuranceResult {
+export function calculateInsurance(salary: number, city = 'default', customRates: { pension?: number; medical?: number; unemployment?: number; housing?: number } = {}): InsuranceResult {
   const cityConfig = CITY_LIMITS[city] || CITY_LIMITS.default
   const rates = { ...INSURANCE_RATES, housing: cityConfig.housingRate, ...customRates }
   const base = Math.max(cityConfig.min, Math.min(salary, cityConfig.max))

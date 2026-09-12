@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { calculateNetPay, getCityList, getDeductionOptions, formatMoney } from '../utils/calculator'
 import type { CalcResult } from '../utils/calculator'
+import SalaryIncreaseCalculator from './SalaryIncreaseCalculator'
 
 const MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) => index + 1)
 
@@ -17,7 +18,12 @@ export default function Calculator({ onSave }: CalculatorProps) {
   const [salaryMode, setSalaryMode] = useState<'monthly' | 'annual'>('monthly')
   const [city, setCity] = useState('beijing')
   const [housingRate, setHousingRate] = useState(0.12)
+  const [pensionRate, setPensionRate] = useState(8)
+  const [medicalRate, setMedicalRate] = useState(2)
+  const [unemploymentRate, setUnemploymentRate] = useState(0.5)
+  const [showInsuranceSettings, setShowInsuranceSettings] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [showComparison, setShowComparison] = useState(false)
   const [specialDeduction, setSpecialDeduction] = useState(0)
   const [selectedDeductions, setSelectedDeductions] = useState<string[]>([])
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth() + 1)
@@ -51,12 +57,17 @@ export default function Calculator({ onSave }: CalculatorProps) {
       salary: monthlySalary,
       city,
       specialDeduction,
-      customRates: { housing: housingRate },
+      customRates: {
+        pension: pensionRate / 100,
+        medical: medicalRate / 100,
+        unemployment: unemploymentRate / 100,
+        housing: housingRate,
+      },
       monthlyExtraIncomes,
       selectedMonth,
     })
     setResult(calcResult)
-  }, [salary, salaryMode, city, specialDeduction, housingRate, monthlyExtraIncomes, selectedMonth])
+  }, [salary, salaryMode, city, specialDeduction, housingRate, pensionRate, medicalRate, unemploymentRate, monthlyExtraIncomes, selectedMonth])
 
   useEffect(() => { doCalculate() }, [doCalculate])
 
@@ -101,6 +112,15 @@ export default function Calculator({ onSave }: CalculatorProps) {
             <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-950">收入与扣除设置</h2>
           </div>
           <p className="text-sm text-slate-500">修改任意字段后自动重新计算</p>
+          <button
+            onClick={() => setShowComparison(true)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition shadow-sm"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            涨薪对比
+          </button>
         </div>
 
         {/* Salary mode toggle */}
@@ -201,25 +221,93 @@ export default function Calculator({ onSave }: CalculatorProps) {
           </select>
         </div>
 
-        {/* Housing fund slider */}
-        <div className="mb-4">
-          <label className="flex items-center justify-between text-sm font-medium text-gray-700 mb-1">
-            <span>住房公积金比例</span>
-            <span className="text-emerald-600 font-semibold">{Math.round(housingRate * 100)}%</span>
-          </label>
-          <input
-            type="range"
-            min="0.05"
-            max="0.12"
-            step="0.01"
-            value={housingRate}
-            onChange={(e) => setHousingRate(parseFloat(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-          />
-          <div className="flex justify-between text-xs text-gray-400 mt-1">
-            <span>5%</span>
-            <span>12%</span>
-          </div>
+        {/* Insurance settings */}
+        <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50/50 overflow-hidden">
+          <button
+            onClick={() => setShowInsuranceSettings(!showInsuranceSettings)}
+            className="w-full px-4 py-3 flex items-center justify-between text-sm font-medium text-slate-700 hover:bg-slate-100 transition"
+          >
+            <span className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              社保公积金比例
+              <span className="text-xs text-slate-400 font-normal">养老{pensionRate}% / 医疗{medicalRate}% / 失业{unemploymentRate}% / 公积金{Math.round(housingRate * 100)}%</span>
+            </span>
+            <svg className={`w-4 h-4 text-slate-400 transition-transform ${showInsuranceSettings ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {showInsuranceSettings && (
+            <div className="px-4 pb-4 pt-2 border-t border-slate-200 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">养老保险</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max="20"
+                      step="0.5"
+                      value={pensionRate}
+                      onChange={(e) => setPensionRate(parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+                    />
+                    <span className="text-sm text-slate-400">%</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">医疗保险</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max="10"
+                      step="0.5"
+                      value={medicalRate}
+                      onChange={(e) => setMedicalRate(parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+                    />
+                    <span className="text-sm text-slate-400">%</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">失业保险</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max="2"
+                      step="0.1"
+                      value={unemploymentRate}
+                      onChange={(e) => setUnemploymentRate(parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+                    />
+                    <span className="text-sm text-slate-400">%</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">住房公积金</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max="24"
+                      step="1"
+                      value={Math.round(housingRate * 100)}
+                      onChange={(e) => setHousingRate((parseFloat(e.target.value) || 0) / 100)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+                    />
+                    <span className="text-sm text-slate-400">%</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-slate-400">
+                以上为个人缴纳比例。切换城市会自动更新公积金默认比例，其他比例可手动调整。
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Special deductions */}
@@ -395,6 +483,12 @@ export default function Calculator({ onSave }: CalculatorProps) {
             </button>
           )}
         </div>
+      )}
+
+      {showComparison && (
+        <SalaryIncreaseCalculator
+          onClose={() => setShowComparison(false)}
+        />
       )}
     </div>
   )
