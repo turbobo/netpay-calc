@@ -73,7 +73,7 @@ export interface MonthResult {
   nonTaxableExtraIncome: number
   insurance: InsuranceResult
   tax: number
-  taxableIncome: number
+  cumulativeTaxableIncome: number
   netPay: number
 }
 
@@ -89,7 +89,7 @@ export interface CalcResult {
     insurance: number
     tax: number
     net: number
-    monthlyBreakdown: { month: number; taxableIncome: number; tax: number; cumulativeTax: number }[]
+    monthlyBreakdown: { month: number; cumulativeTaxableIncome: number; tax: number; cumulativeTax: number }[]
   }
   cityInfo: { min: number; max: number; label: string; housingRate: number }
 }
@@ -138,25 +138,27 @@ function normalizeMonthlyExtraIncomes(monthlyExtraIncomes: { taxable?: string | 
   })
 }
 
-function calculateAnnualTaxCumulative(monthlyTaxableIncomes: number[]) {
-  const months: { month: number; taxableIncome: number; tax: number; cumulativeTax: number }[] = []
+// 累计预扣法：逐月累加应纳税所得额增量（可为负），累计后再取 0 下限计税。
+// 低薪月份未用满的减除费用与专项扣除会形成负增量，结转到后续月份抵扣年终奖等收入。
+function calculateAnnualTaxCumulative(monthlyTaxableDeltas: number[]) {
+  const months: { month: number; cumulativeTaxableIncome: number; tax: number; cumulativeTax: number }[] = []
   let cumulativeTaxableIncome = 0
   let cumulativeTaxPaid = 0
 
   for (let index = 0; index < MONTH_COUNT; index++) {
-    const taxableIncome = Math.max(0, monthlyTaxableIncomes[index] || 0)
-    cumulativeTaxableIncome += taxableIncome
+    cumulativeTaxableIncome += monthlyTaxableDeltas[index] || 0
+    const taxableBase = Math.max(0, cumulativeTaxableIncome)
     const bracket = ANNUAL_TAX_BRACKETS.find(
-      item => cumulativeTaxableIncome > item.min && cumulativeTaxableIncome <= item.max,
+      item => taxableBase > item.min && taxableBase <= item.max,
     ) || ANNUAL_TAX_BRACKETS[ANNUAL_TAX_BRACKETS.length - 1]
 
-    const cumulativeTaxDue = Math.max(0, cumulativeTaxableIncome * bracket.rate - bracket.deduction)
+    const cumulativeTaxDue = Math.max(0, taxableBase * bracket.rate - bracket.deduction)
     const monthTax = Math.round((cumulativeTaxDue - cumulativeTaxPaid) * 100) / 100
     cumulativeTaxPaid = cumulativeTaxDue
 
     months.push({
       month: index + 1,
-      taxableIncome,
+      cumulativeTaxableIncome: taxableBase,
       tax: monthTax,
       cumulativeTax: Math.round(cumulativeTaxPaid * 100) / 100,
     })
@@ -177,11 +179,12 @@ export function calculateNetPay({
   const insurance = calculateInsurance(salary, city, customRates)
   const normalizedExtraIncomes = normalizeMonthlyExtraIncomes(monthlyExtraIncomes)
   const safeSelectedMonth = Math.min(MONTH_COUNT, Math.max(1, Number(selectedMonth) || 1))
+  // 月度增量允许为负，扣除缺口由累计预扣法在累计层面抵扣
   const taxableBaseBeforeExtra = salary - insurance.total - TAX_THRESHOLD - specialDeduction
-  const monthlyTaxableIncomes = normalizedExtraIncomes.map(
-    item => Math.max(0, taxableBaseBeforeExtra + item.taxable),
+  const monthlyTaxableDeltas = normalizedExtraIncomes.map(
+    item => taxableBaseBeforeExtra + item.taxable,
   )
-  const annualTaxResult = calculateAnnualTaxCumulative(monthlyTaxableIncomes)
+  const annualTaxResult = calculateAnnualTaxCumulative(monthlyTaxableDeltas)
   const monthlyResults: MonthResult[] = annualTaxResult.months.map((taxResult, index) => {
     const extraIncome = normalizedExtraIncomes[index]
     const gross = salary + extraIncome.taxable + extraIncome.nonTaxable
@@ -193,7 +196,7 @@ export function calculateNetPay({
       nonTaxableExtraIncome: extraIncome.nonTaxable,
       insurance,
       tax: taxResult.tax,
-      taxableIncome: taxResult.taxableIncome,
+      cumulativeTaxableIncome: taxResult.cumulativeTaxableIncome,
       netPay: Math.round((gross - insurance.total - taxResult.tax) * 100) / 100,
     }
   })
