@@ -155,44 +155,83 @@ export default function DashboardPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                 {history.map((entry) => (
-                  <div key={entry.id} className="dashboard-panel p-4 text-slate-950">
-                    <div className="flex justify-between items-start mb-2">
+                  <div key={entry.id} className="dashboard-panel p-4 text-slate-950 hover:shadow-lg transition-shadow duration-200">
+                    <div className="flex justify-between items-start mb-3">
                       <div>
-                        <span className="text-sm text-gray-500">{entry.city}</span>
-                        {entry.month && (
-                          <span className="text-xs text-emerald-600 ml-2">{entry.month} 月</span>
-                        )}
-                        <span className="text-xs text-gray-400 ml-2">{entry.date}</span>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-gray-700">{entry.city}</span>
+                          {entry.month && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">{entry.month} 月</span>
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-400">{entry.date}</span>
                       </div>
                       <button
                         onClick={() => handleDelete(entry.id)}
-                        className="text-xs text-gray-400 hover:text-red-500"
+                        className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                        aria-label="删除记录"
                       >
-                        删除
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </div>
-                    <div className="flex items-baseline gap-4">
+                    
+                    {/* Main amounts */}
+                    <div className="flex items-baseline justify-between mb-3">
                       <div>
-                        <p className="text-xs text-gray-400">当月总收入</p>
-                        <p className="font-medium">¥{formatMoney(entry.gross)}</p>
-                        {(entry.taxableExtraIncome > 0 || entry.nonTaxableExtraIncome > 0) && (
-                          <p className="text-[11px] text-gray-400 mt-0.5">
-                            额外收入 ¥{formatMoney(
-                              (entry.taxableExtraIncome || 0) + (entry.nonTaxableExtraIncome || 0),
-                            )}
-                          </p>
-                        )}
+                        <p className="text-xs text-gray-400 mb-0.5">总收入</p>
+                        <p className="text-lg font-semibold tabular-nums">¥{formatMoney(entry.gross)}</p>
                       </div>
-                      <div className="text-gray-300">→</div>
-                      <div>
-                        <p className="text-xs text-gray-400">到手</p>
-                        <p className="font-bold text-emerald-600">¥{formatMoney(entry.netPay)}</p>
-                      </div>
-                      <div className="ml-auto text-right">
-                        <p className="text-xs text-gray-400">扣除</p>
-                        <p className="text-sm text-red-500">-¥{formatMoney(entry.insurance + entry.tax)}</p>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-400 mb-0.5">到手</p>
+                        <p className="text-xl font-bold text-emerald-600 tabular-nums">¥{formatMoney(entry.netPay)}</p>
                       </div>
                     </div>
+                    
+                    {/* Progress bar visualization */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-500">扣除明细</span>
+                        <span className="text-red-500 font-medium tabular-nums">
+                          -¥{formatMoney(entry.insurance + entry.tax)} ({entry.gross > 0 ? Math.round(((entry.insurance + entry.tax) / entry.gross) * 100) : 0}%)
+                        </span>
+                      </div>
+                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full flex">
+                          <div 
+                            className="bg-amber-400 transition-all duration-300"
+                            style={{ width: `${entry.gross > 0 ? (entry.insurance / entry.gross) * 100 : 0}%` }}
+                            title={`五险一金: ¥${formatMoney(entry.insurance)}`}
+                          />
+                          <div 
+                            className="bg-red-400 transition-all duration-300"
+                            style={{ width: `${entry.gross > 0 ? (entry.tax / entry.gross) * 100 : 0}%` }}
+                            title={`个税: ¥${formatMoney(entry.tax)}`}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-amber-400" />
+                          <span>五险一金 ¥{formatMoney(entry.insurance)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-red-400" />
+                          <span>个税 ¥{formatMoney(entry.tax)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Extra income if any */}
+                    {(entry.taxableExtraIncome > 0 || entry.nonTaxableExtraIncome > 0) && (
+                      <div className="mt-3 pt-3 border-t border-slate-100">
+                        <p className="text-xs text-gray-400 mb-1">额外收入</p>
+                        <p className="text-sm text-emerald-600 font-medium tabular-nums">
+                          +¥{formatMoney((entry.taxableExtraIncome || 0) + (entry.nonTaxableExtraIncome || 0))}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
