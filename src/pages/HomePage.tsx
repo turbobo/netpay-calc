@@ -27,17 +27,33 @@ export default function HomePage() {
 
         {/* Features */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-10">
-          <div className="border border-white/10 bg-white/[0.06] p-5 rounded-xl text-white">
+          <div className="border border-white/10 bg-white/[0.06] p-5 rounded-xl text-white group hover:bg-white/[0.08] transition">
+            <div className="mb-4 flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 group-hover:scale-110 transition-transform">
+              <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
             <p className="eyebrow text-emerald-300 mb-3">01 · Coverage</p>
             <h3 className="font-semibold mb-1">覆盖 8 大城市</h3>
             <p className="text-sm text-slate-400 leading-relaxed">自动匹配当地五险一金基数与默认公积金比例。</p>
           </div>
-          <div className="border border-white/10 bg-white/[0.06] p-5 rounded-xl text-white">
+          <div className="border border-white/10 bg-white/[0.06] p-5 rounded-xl text-white group hover:bg-white/[0.08] transition">
+            <div className="mb-4 flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 group-hover:scale-110 transition-transform">
+              <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
             <p className="eyebrow text-emerald-300 mb-3">02 · Breakdown</p>
             <h3 className="font-semibold mb-1">逐月收入明细</h3>
             <p className="text-sm text-slate-400 leading-relaxed">月薪、奖金、补贴、福利和扣除项一目了然。</p>
           </div>
-          <div className="border border-white/10 bg-white/[0.06] p-5 rounded-xl text-white">
+          <div className="border border-white/10 bg-white/[0.06] p-5 rounded-xl text-white group hover:bg-white/[0.08] transition">
+            <div className="mb-4 flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 group-hover:scale-110 transition-transform">
+              <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
             <p className="eyebrow text-emerald-300 mb-3">03 · Tax</p>
             <h3 className="font-semibold mb-1">累计预扣计算</h3>
             <p className="text-sm text-slate-400 leading-relaxed">根据每月实际计税收入计算全年个税变化。</p>
