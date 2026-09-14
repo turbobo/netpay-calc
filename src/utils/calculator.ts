@@ -18,6 +18,7 @@ const MONTHLY_TAX_BRACKETS = [
 ]
 
 // 累计预扣法年度税率表（累计应纳税所得额区间）
+// 对应个税规则：7级超额累进税率，速算扣除数单位元
 const ANNUAL_TAX_BRACKETS = [
   { min: 0, max: 36000, rate: 0.03, deduction: 0 },
   { min: 36000, max: 144000, rate: 0.10, deduction: 2520 },
@@ -122,13 +123,15 @@ interface CalcParams {
   selectedMonth?: number
   yearEndBonus?: number
   bonusTaxMode?: BonusTaxMode
+  // 社保公积金缴费基数：留空则按城市上下限自动计算（Math.max(min, Math.min(salary, max))）
+  insuranceBase?: number
 }
 
 // 计算五险一金
-export function calculateInsurance(salary: number, city = 'default', customRates: { pension?: number; medical?: number; unemployment?: number; housing?: number } = {}): InsuranceResult {
+export function calculateInsurance(salary: number, city = 'default', customRates: { pension?: number; medical?: number; unemployment?: number; housing?: number } = {}, customBase?: number): InsuranceResult {
   const cityConfig = CITY_LIMITS[city] || CITY_LIMITS.default
   const rates = { ...INSURANCE_RATES, housing: cityConfig.housingRate, ...customRates }
-  const base = Math.max(cityConfig.min, Math.min(salary, cityConfig.max))
+  const base = customBase !== undefined ? customBase : Math.max(cityConfig.min, Math.min(salary, cityConfig.max))
 
   const pension = Math.round(base * rates.pension * 100) / 100
   const medical = Math.round(base * rates.medical * 100) / 100
@@ -211,8 +214,10 @@ export function calculateNetPay({
   selectedMonth = 1,
   yearEndBonus = 0,
   bonusTaxMode = 'combined',
+  insuranceBase,
 }: CalcParams): CalcResult {
-  const insurance = calculateInsurance(salary, city, customRates)
+  const safeInsuranceBase = insuranceBase !== undefined ? Math.max(0, Number(insuranceBase) || 0) : undefined
+  const insurance = calculateInsurance(salary, city, customRates, safeInsuranceBase)
   const normalizedExtraIncomes = normalizeMonthlyExtraIncomes(monthlyExtraIncomes)
   const safeSelectedMonth = Math.min(MONTH_COUNT, Math.max(1, Number(selectedMonth) || 1))
   const safeYearEndBonus = Math.max(0, Number(yearEndBonus) || 0)

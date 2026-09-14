@@ -27,6 +27,24 @@ describe('社保公积金计算', () => {
     expect(result.pension).toBe(800)
     expect(result.housing).toBe(1000)
   })
+
+  it('支持手动指定缴费基数，覆盖城市上下限', () => {
+    // 20000 月薪北京自动基数应为 20000；手动指定 10000 后按 10000 计算
+    const autoBase = calculateInsurance(20000, 'beijing')
+    expect(autoBase.base).toBe(20000)
+    expect(autoBase.total).toBe(4500)
+
+    const customBase = calculateInsurance(20000, 'beijing', {}, 10000)
+    expect(customBase.base).toBe(10000)
+    expect(customBase.total).toBe(2250)
+
+    // 通过 calculateNetPay 的 insuranceBase 参数传入
+    const result = calculateNetPay({ salary: 20000, city: 'beijing', insuranceBase: 10000 })
+    expect(result.cityInfo.min).toBe(6326)
+    expect(result.annual.baseSalary).toBe(240000)
+    // annualInsurance = 2250 * 12 = 27000
+    expect(result.annual.insurance).toBe(27000)
+  })
 })
 
 describe('城市配置单一数据源', () => {
@@ -74,6 +92,24 @@ describe('累计预扣法', () => {
     })
     // 累计 20000 - 11080.2 = 8919.8 → 3% → 267.59
     expect(result.annual.tax).toBe(267.59)
+  })
+
+  it('与个税规则截图案例一致：30000月薪+4500三险一金+2000专项扣除', () => {
+    // 截取样例：某职员每月应发工资30000元，减除费用5000，"三险一金"4500，
+    // 子女教育/赡养老人专项附加扣除2000，无减免收入及免税额。
+    const result = calculateNetPay({
+      salary: 30000,
+      city: 'beijing',
+      specialDeduction: 2000,
+      customRates: { pension: 0.08, medical: 0.02, unemployment: 0.005, housing: 0.045 },
+    })
+    // 1月：(30000-5000-4500-2000) × 3% = 555
+    expect(result.annual.monthlyBreakdown[0].tax).toBe(555)
+    // 2月：(累计37000) × 10% - 2520 - 555 = 625
+    expect(result.annual.monthlyBreakdown[1].tax).toBe(625)
+    // 3月：(累计55500) × 10% - 2520 - 1180 = 1850
+
+    expect(result.annual.monthlyBreakdown[2].tax).toBe(1850)
   })
 })
 

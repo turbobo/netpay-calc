@@ -23,11 +23,12 @@ export default function Calculator({ onSave }: CalculatorProps) {
   const [salary, setSalary] = useState('')
   const [salaryMode, setSalaryMode] = useState<'monthly' | 'annual'>('monthly')
   const [city, setCity] = useState('beijing')
-  const [housingRate, setHousingRate] = useState(0.12)
+  const [housingPercent, setHousingPercent] = useState(12)
   const [pensionRate, setPensionRate] = useState(8)
   const [medicalRate, setMedicalRate] = useState(2)
   const [unemploymentRate, setUnemploymentRate] = useState(0.5)
   const [showInsuranceSettings, setShowInsuranceSettings] = useState(false)
+  const [insuranceBase, setInsuranceBase] = useState('')
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showComparison, setShowComparison] = useState(false)
   const [specialDeduction, setSpecialDeduction] = useState(0)
@@ -43,7 +44,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
 
   // Sync housing rate when city changes（单一数据源：calculator.ts 的 CITY_LIMITS）
   useEffect(() => {
-    setHousingRate(getCityHousingRate(city))
+    setHousingPercent(Math.round(getCityHousingRate(city) * 100))
   }, [city])
 
   // Sum selected deductions
@@ -68,15 +69,16 @@ export default function Calculator({ onSave }: CalculatorProps) {
         pension: pensionRate / 100,
         medical: medicalRate / 100,
         unemployment: unemploymentRate / 100,
-        housing: housingRate,
+        housing: housingPercent / 100,
       },
       monthlyExtraIncomes,
       selectedMonth,
       yearEndBonus: Math.max(0, parseFloat(yearEndBonus) || 0),
       bonusTaxMode,
+      insuranceBase: parseFloat(insuranceBase) || undefined,
     })
     setResult(calcResult)
-  }, [salary, salaryMode, city, specialDeduction, housingRate, pensionRate, medicalRate, unemploymentRate, monthlyExtraIncomes, selectedMonth, yearEndBonus, bonusTaxMode])
+  }, [salary, salaryMode, city, specialDeduction, housingPercent, pensionRate, medicalRate, unemploymentRate, monthlyExtraIncomes, selectedMonth, yearEndBonus, bonusTaxMode, insuranceBase])
 
   useEffect(() => { doCalculate() }, [doCalculate])
 
@@ -296,7 +298,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
               社保公积金比例
-              <span className="text-xs text-slate-400 font-normal">养老{pensionRate}% / 医疗{medicalRate}% / 失业{unemploymentRate}% / 公积金{Math.round(housingRate * 100)}%</span>
+              <span className="text-xs text-slate-400 font-normal">养老{pensionRate}% / 医疗{medicalRate}% / 失业{unemploymentRate}% / 公积金{housingPercent}%</span>
             </span>
             <svg className={`w-4 h-4 text-slate-400 transition-transform ${showInsuranceSettings ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -359,16 +361,30 @@ export default function Calculator({ onSave }: CalculatorProps) {
                       min="0"
                       max="24"
                       step="1"
-                      value={Math.round(housingRate * 100)}
-                      onChange={(e) => setHousingRate(clampNumber(parseFloat(e.target.value), 0, 24) / 100)}
+                      value={housingPercent}
+                      onChange={(e) => setHousingPercent(clampNumber(parseFloat(e.target.value), 0, 24))}
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
                     />
                     <span className="text-sm text-slate-400">%</span>
                   </div>
                 </div>
               </div>
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <div className="flex items-center gap-3">
+                  <label className="text-xs font-medium text-slate-500 whitespace-nowrap">缴费基数（元/月）</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={insuranceBase}
+                    onChange={(e) => setInsuranceBase(e.target.value)}
+                    placeholder="自动计算"
+                    className="w-full max-w-52 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+                  />
+                  <span className="text-xs text-slate-400">留空则按城市上下限自动计算</span>
+                </div>
+              </div>
               <p className="text-xs text-slate-400">
-                以上为个人缴纳比例。切换城市会自动更新公积金默认比例，其他比例可手动调整；超出范围（养老 0-20%、医疗 0-10%、失业 0-2%、公积金 0-24%）的值会自动收敛。
+                以上为个人缴纳比例。切换城市会自动更新公积金默认比例，其他比例可手动调整；超出范围（养老 0-20%、医疗 0-10%、失业 0-2%、公积金 0-24%）的值会自动收敛。缴费基数留空则按城市上下限自动计算，手动输入后生效全部 12 个月。
               </p>
             </div>
           )}
