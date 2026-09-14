@@ -126,7 +126,7 @@ export default function DashboardPage() {
 
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-10">
         <div className="mb-8">
-          <p className="eyebrow text-emerald-300 mb-2">Saved scenarios</p>
+          <p className="eyebrow text-emerald-300 mb-2">已保存方案</p>
           <h1 className="text-2xl md:text-3xl font-bold text-white">年度收入工作台</h1>
           <p className="text-slate-400 mt-1">新建计算，并查看已保存的收入方案</p>
         </div>

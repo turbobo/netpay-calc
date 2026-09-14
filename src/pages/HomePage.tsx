@@ -13,7 +13,7 @@ export default function HomePage() {
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-10 md:py-14">
         {/* Hero */}
         <div className="mb-8 md:mb-10 max-w-3xl">
-          <p className="eyebrow text-emerald-300 mb-3">Annual income planning</p>
+          <p className="eyebrow text-emerald-300 mb-3">年度收入规划</p>
           <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white mb-4">
             看清每个月，算准全年到手收入
           </h1>
@@ -34,7 +34,7 @@ export default function HomePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <p className="eyebrow text-emerald-300 mb-3">01 · Coverage</p>
+            <p className="eyebrow text-emerald-300 mb-3">01 · 覆盖范围</p>
             <h3 className="font-semibold mb-1">覆盖 8 大城市</h3>
             <p className="text-sm text-slate-400 leading-relaxed">自动匹配当地五险一金基数与默认公积金比例。</p>
           </div>
@@ -44,7 +44,7 @@ export default function HomePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
-            <p className="eyebrow text-emerald-300 mb-3">02 · Breakdown</p>
+            <p className="eyebrow text-emerald-300 mb-3">02 · 收入明细</p>
             <h3 className="font-semibold mb-1">逐月收入明细</h3>
             <p className="text-sm text-slate-400 leading-relaxed">月薪、奖金、补贴、福利和扣除项一目了然。</p>
           </div>
@@ -54,7 +54,7 @@ export default function HomePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
             </div>
-            <p className="eyebrow text-emerald-300 mb-3">03 · Tax</p>
+            <p className="eyebrow text-emerald-300 mb-3">03 · 个税计算</p>
             <h3 className="font-semibold mb-1">累计预扣计算</h3>
             <p className="text-sm text-slate-400 leading-relaxed">根据每月实际计税收入计算全年个税变化。</p>
           </div>

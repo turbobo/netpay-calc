@@ -125,7 +125,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
         <div className="px-5 md:px-7 pt-5 md:pt-7 pb-4 border-b border-slate-200">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-2 mb-5">
             <div>
-              <p className="eyebrow mb-2">Income setup</p>
+              <p className="eyebrow mb-2">收入设置</p>
               <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-950">收入与扣除设置</h2>
             </div>
             <button
@@ -485,7 +485,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
           <div className="dashboard-panel p-5 md:p-7 overflow-hidden">
             <div className="flex items-center justify-between gap-4 mb-5">
               <div>
-                <p className="eyebrow mb-1">Annual overview</p>
+                <p className="eyebrow mb-1">年度汇总</p>
                 <h3 className="text-xl font-bold text-slate-950">年度汇总</h3>
               </div>
               <span className="text-xs text-slate-500">12 个月累计</span>
@@ -543,7 +543,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
           <div className="dashboard-panel p-5 md:p-7">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-5">
               <div>
-                <p className="eyebrow mb-1">Monthly cash flow</p>
+                <p className="eyebrow mb-1">月度明细</p>
                 <h3 className="text-xl font-bold text-slate-950">12 个月收入明细</h3>
               </div>
               <p className="text-xs text-slate-500">点击行查看详情并编辑该月额外收入</p>
@@ -620,7 +620,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
           <div className="dashboard-panel p-5 md:p-7">
             <div className="flex items-center justify-between gap-4 mb-5">
               <div>
-                <p className="eyebrow mb-1">Selected month</p>
+                <p className="eyebrow mb-1">当前月份</p>
                 <h3 className="text-xl font-bold text-slate-950">{result.monthly.month} 月完整明细</h3>
               </div>
               <span className="text-sm font-semibold text-emerald-600">到手 ¥{formatMoney(result.monthly.netPay)}</span>
