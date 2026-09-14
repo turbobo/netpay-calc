@@ -307,7 +307,7 @@ export function getDeductionOptions() {
       key: 'childEducation',
       label: '子女教育',
       amount: SPECIAL_DEDUCTIONS.childEducation,
-      description: '学前教育（满3岁至小学入学前）及学历教育（小学至博士），2023年起每子女2000元/月。父母可各扣50%或一方全额扣除，年度内不可变更。境内外公办/民办学校均可享受。',
+      description: '学前教育（满3周岁至小学入学前，不含0-3岁阶段）及学历教育（义务教育、高中阶段、高等教育），2023年度（含）起每子女2000元/月定额扣除。父母可各扣50%或一方全额扣除，年度内不可变更。境内外、公办民办学校均可享受；不再接受全日制学历教育的不可填报。',
     },
     {
       key: 'continuingEducation',
