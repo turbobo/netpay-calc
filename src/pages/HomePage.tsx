@@ -72,8 +72,28 @@ export default function HomePage() {
         )}
       </main>
 
-      <footer className="border-t border-white/10 py-6 text-center text-slate-500 text-sm">
-        <p>© 2026 NetPay Calc · 数据仅供参考，以实际发放为准</p>
+      <footer className="border-t border-white/10 py-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="text-center md:text-left">
+              <p className="text-slate-500 text-sm">© 2026 NetPay Calc · 数据仅供参考，以实际发放为准</p>
+            </div>
+            <nav className="flex items-center gap-6 text-sm">
+              <a href="#/about" className="text-slate-400 hover:text-white transition">
+                关于
+              </a>
+              <a href="#/policy" className="text-slate-400 hover:text-white transition">
+                政策说明
+              </a>
+              <a href="mailto:feedback@netpaycalc.com" className="text-slate-400 hover:text-white transition">
+                反馈建议
+              </a>
+              <a href="#/privacy" className="text-slate-400 hover:text-white transition">
+                隐私政策
+              </a>
+            </nav>
+          </div>
+        </div>
       </footer>
     </div>
   )
