@@ -449,29 +449,52 @@ export default function Calculator({ onSave }: CalculatorProps) {
 
               {/* Special deductions */}
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 md:p-5">
-                <h3 className="text-sm font-medium text-slate-700 mb-3 flex items-center gap-2">
-                  <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                  </svg>
-                  专项附加扣除（可选）
-                </h3>
-                <p className="text-sm text-gray-600 mb-3">勾选你符合的扣除项目：</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {deductionOptions.map(opt => (
-                    <label key={opt.key} className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-white transition">
-                      <input
-                        type="checkbox"
-                        checked={selectedDeductions.includes(opt.key)}
-                        onChange={() => toggleDeduction(opt.key)}
-                        className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                      />
-                      <span className="text-sm">{opt.label}（{opt.amount}/月）</span>
-                    </label>
-                  ))}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                    专项附加扣除（可选）
+                  </h3>
+                  {specialDeduction > 0 && (
+                    <span className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+                      合计 ¥{specialDeduction.toLocaleString()}/月
+                    </span>
+                  )}
                 </div>
-                {specialDeduction > 0 && (
-                  <p className="text-sm text-emerald-600 mt-3 font-medium">专项附加扣除合计：¥{specialDeduction.toLocaleString()}/月</p>
-                )}
+                <p className="text-xs text-gray-500 mb-3">勾选你符合的扣除项目，每月可减免相应应税收入：</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {deductionOptions.map(opt => {
+                    const isSelected = selectedDeductions.includes(opt.key)
+                    return (
+                      <label
+                        key={opt.key}
+                        className={`flex items-center justify-between cursor-pointer p-3 rounded-lg border transition-all ${
+                          isSelected
+                            ? 'border-emerald-500 bg-emerald-50 shadow-sm'
+                            : 'border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleDeduction(opt.key)}
+                            className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span className={`text-sm font-medium ${isSelected ? 'text-emerald-700' : 'text-slate-700'}`}>
+                            {opt.label}
+                          </span>
+                        </div>
+                        <span className={`text-xs font-semibold tabular-nums ${
+                          isSelected ? 'text-emerald-600' : 'text-slate-500'
+                        }`}>
+                          ¥{opt.amount}/月
+                        </span>
+                      </label>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           )}
