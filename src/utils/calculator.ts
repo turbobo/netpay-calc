@@ -303,7 +303,12 @@ export function getCityList() {
 
 export function getDeductionOptions() {
   return [
-    { key: 'childEducation', label: '子女教育', amount: SPECIAL_DEDUCTIONS.childEducation },
+    {
+      key: 'childEducation',
+      label: '子女教育',
+      amount: SPECIAL_DEDUCTIONS.childEducation,
+      description: '学前教育（满3岁至小学入学前）及学历教育（小学至博士），2023年起每子女2000元/月。父母可各扣50%或一方全额扣除，年度内不可变更。境内外公办/民办学校均可享受。',
+    },
     { key: 'continuingEducation', label: '继续教育', amount: SPECIAL_DEDUCTIONS.continuingEducation },
     { key: 'housingLoan', label: '住房贷款利息', amount: SPECIAL_DEDUCTIONS.housingLoan },
     { key: 'housingRent', label: '住房租金', amount: SPECIAL_DEDUCTIONS.housingRent },

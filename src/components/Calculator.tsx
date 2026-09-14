@@ -515,16 +515,23 @@ export default function Calculator({ onSave }: CalculatorProps) {
                             : 'border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => toggleDeduction(opt.key)}
-                            className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                            className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 flex-shrink-0"
                           />
-                          <span className={`text-sm font-medium ${isSelected ? 'text-emerald-700' : 'text-slate-700'}`}>
-                            {opt.label}
-                          </span>
+                          <div className="min-w-0">
+                            <span className={`text-sm font-medium ${isSelected ? 'text-emerald-700' : 'text-slate-700'}`}>
+                              {opt.label}
+                            </span>
+                            {'description' in opt && opt.description && (
+                              <p className="text-xs text-slate-400 mt-0.5 leading-snug line-clamp-2">
+                                {opt.description}
+                              </p>
+                            )}
+                          </div>
                         </div>
                         <span className={`text-xs font-semibold tabular-nums ${
                           isSelected ? 'text-emerald-600' : 'text-slate-500'
