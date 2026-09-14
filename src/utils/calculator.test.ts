@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   calculateBonusTaxSeparate,
   calculateInsurance,
+  calculateMajorMedicalDeduction,
   calculateNetPay,
   getCityHousingRate,
   POLICY_DATA_YEAR,
@@ -183,5 +184,28 @@ describe('年终奖两种计税口径', () => {
     })
     expect(result.annual.yearEndBonus).toBe(0)
     expect(result.annual.bonusTax).toBe(0)
+  })
+})
+
+describe('大病医疗专项附加扣除', () => {
+  it('按超过 15000 元的部分据实扣除，限额 80000 元', () => {
+    expect(calculateMajorMedicalDeduction(0)).toBe(0)
+    expect(calculateMajorMedicalDeduction(15000)).toBe(0)
+    expect(calculateMajorMedicalDeduction(30000)).toBe(15000)
+    expect(calculateMajorMedicalDeduction(95000)).toBe(80000)
+    expect(calculateMajorMedicalDeduction(1000000)).toBe(80000)
+    expect(calculateMajorMedicalDeduction(-100)).toBe(0)
+  })
+
+  it('年末汇算抵扣：年度个税减少，12 月体现退税', () => {
+    // 20000 月薪北京无大病医疗时年个税 10080
+    const without = calculateNetPay({ salary: 20000, city: 'beijing' })
+    expect(without.annual.tax).toBe(10080)
+
+    // 个人负担 30000 → 可扣除 15000 → 年末累计 126000 - 15000 = 111000 → 10% 档 = 8580
+    const result = calculateNetPay({ salary: 20000, city: 'beijing', majorMedicalExpense: 30000 })
+    expect(result.annual.tax).toBe(8580)
+    // 12 月按汇算口径退税 450
+    expect(result.annual.monthlyResults[11].tax).toBe(-450)
   })
 })

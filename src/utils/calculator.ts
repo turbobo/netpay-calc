@@ -65,6 +65,16 @@ const SPECIAL_DEDUCTIONS: Record<string, number> = {
   childCare: 2000,
 }
 
+// 大病医疗专项附加扣除：医保目录内个人负担超过 15000 元的部分，年度限额 80000 元
+export const MAJOR_MEDICAL_THRESHOLD = 15000
+export const MAJOR_MEDICAL_CAP = 80000
+
+// 按年度个人负担医药费计算大病医疗可扣除额（据实扣除，超起扣线部分封顶）
+export function calculateMajorMedicalDeduction(expense: number): number {
+  const safeExpense = Math.max(0, Number(expense) || 0)
+  return Math.min(MAJOR_MEDICAL_CAP, Math.max(0, safeExpense - MAJOR_MEDICAL_THRESHOLD))
+}
+
 // Types
 export interface InsuranceResult {
   // 社保缴费基数（养老/医疗/失业），可与公积金基数分开设置
@@ -123,6 +133,8 @@ interface CalcParams {
   specialDeduction?: number
   // 其他扣除（补充医保、企业年金等税前扣除项，月度金额）
   otherDeduction?: number
+  // 大病医疗：年度个人负担医药费总额（医保目录内自付），据实扣除、次年汇算清缴时享受
+  majorMedicalExpense?: number
   customRates?: { pension?: number; medical?: number; unemployment?: number; housing?: number }
   monthlyExtraIncomes?: { taxable?: string | number; nonTaxable?: string | number }[]
   selectedMonth?: number
@@ -219,6 +231,7 @@ export function calculateNetPay({
   city = 'default',
   specialDeduction = 0,
   otherDeduction = 0,
+  majorMedicalExpense = 0,
   customRates = {},
   monthlyExtraIncomes = [],
   selectedMonth = 1,
@@ -239,9 +252,11 @@ export function calculateNetPay({
 
   // 月度增量允许为负，扣除缺口由累计预扣法在累计层面抵扣
   const safeOtherDeduction = Math.max(0, Number(otherDeduction) || 0)
+  // 大病医疗为年度据实扣除，按汇算清缴口径在 12 月计入累计增量（12 月可能出现退税负值）
+  const majorMedicalDeduction = calculateMajorMedicalDeduction(majorMedicalExpense)
   const taxableBaseBeforeExtra = salary - insurance.total - TAX_THRESHOLD - specialDeduction - safeOtherDeduction
   const monthlyTaxableDeltas = normalizedExtraIncomes.map(
-    (item, index) => taxableBaseBeforeExtra + item.taxable + (index === MONTH_COUNT - 1 ? combinedBonusIncome : 0),
+    (item, index) => taxableBaseBeforeExtra + item.taxable + (index === MONTH_COUNT - 1 ? combinedBonusIncome - majorMedicalDeduction : 0),
   )
   const annualTaxResult = calculateAnnualTaxCumulative(monthlyTaxableDeltas)
   const monthlyResults: MonthResult[] = annualTaxResult.months.map((taxResult, index) => {

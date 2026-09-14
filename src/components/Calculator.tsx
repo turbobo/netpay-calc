@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { calculateNetPay, getCityList, getDeductionOptions, getCityHousingRate, formatMoney, POLICY_DATA_YEAR } from '../utils/calculator'
+import { calculateNetPay, calculateMajorMedicalDeduction, getCityList, getDeductionOptions, getCityHousingRate, formatMoney, POLICY_DATA_YEAR } from '../utils/calculator'
 import type { CalcResult, BonusTaxMode } from '../utils/calculator'
 import SalaryIncreaseCalculator from './SalaryIncreaseCalculator'
 import FormattedInput from './FormattedInput'
@@ -37,6 +37,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
   const [showInsuranceHelp, setShowInsuranceHelp] = useState(false)
   const [specialDeduction, setSpecialDeduction] = useState(0)
   const [otherDeduction, setOtherDeduction] = useState(0)
+  const [majorMedicalExpense, setMajorMedicalExpense] = useState('')
   const [selectedDeductions, setSelectedDeductions] = useState<string[]>([])
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth() + 1)
   const [monthlyExtraIncomes, setMonthlyExtraIncomes] = useState(createEmptyMonthlyExtraIncomes)
@@ -46,6 +47,11 @@ export default function Calculator({ onSave }: CalculatorProps) {
 
   const cities = useMemo(() => getCityList(), [])
   const deductionOptions = useMemo(() => getDeductionOptions(), [])
+  // 大病医疗可扣除额：个人负担超 1.5 万部分据实，限额 8 万
+  const majorMedicalDeduction = useMemo(
+    () => calculateMajorMedicalDeduction(parseFloat(majorMedicalExpense) || 0),
+    [majorMedicalExpense],
+  )
 
   // Sync housing rate when city changes（单一数据源：calculator.ts 的 CITY_LIMITS）
   useEffect(() => {
@@ -71,6 +77,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
       city,
       specialDeduction,
       otherDeduction,
+      majorMedicalExpense: Math.max(0, parseFloat(majorMedicalExpense) || 0),
       customRates: {
         pension: pensionRate / 100,
         medical: medicalRate / 100,
@@ -85,7 +92,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
       housingBase: parseFloat(housingBase) || undefined,
     })
     setResult(calcResult)
-  }, [salary, salaryMode, city, specialDeduction, otherDeduction, housingPercent, pensionRate, medicalRate, unemploymentRate, monthlyExtraIncomes, selectedMonth, yearEndBonus, bonusTaxMode, socialBase, housingBase])
+  }, [salary, salaryMode, city, specialDeduction, otherDeduction, majorMedicalExpense, housingPercent, pensionRate, medicalRate, unemploymentRate, monthlyExtraIncomes, selectedMonth, yearEndBonus, bonusTaxMode, socialBase, housingBase])
 
   useEffect(() => { doCalculate() }, [doCalculate])
 
@@ -567,6 +574,33 @@ export default function Calculator({ onSave }: CalculatorProps) {
                   value={otherDeduction || ''}
                   onChange={(e) => setOtherDeduction(parseFloat(e.target.value) || 0)}
                   placeholder="如 300"
+                  className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+                />
+              </div>
+
+              {/* Major medical (大病医疗) */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 md:p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 7v10M7 12h10M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    大病医疗（可选）
+                  </h3>
+                  {majorMedicalDeduction > 0 && (
+                    <span className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+                      可扣除 ¥{majorMedicalDeduction.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mb-3">医保目录范围内个人负担（自付）累计超 15000 元的部分，限额 80000 元据实扣除；次年汇算清缴时享受，可由本人、配偶或未成年子女父母一方扣除。年度金额可通过「国家医保服务平台」APP 查询。</p>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={majorMedicalExpense}
+                  onChange={(e) => setMajorMedicalExpense(e.target.value)}
+                  placeholder="年度个人负担医药费，如 30000"
                   className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
                 />
               </div>
