@@ -1,9 +1,15 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { calculateNetPay, getCityList, getDeductionOptions, formatMoney } from '../utils/calculator'
-import type { CalcResult } from '../utils/calculator'
+import { calculateNetPay, getCityList, getDeductionOptions, getCityHousingRate, formatMoney, POLICY_DATA_YEAR } from '../utils/calculator'
+import type { CalcResult, BonusTaxMode } from '../utils/calculator'
 import SalaryIncreaseCalculator from './SalaryIncreaseCalculator'
 
 const MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) => index + 1)
+
+// 比例输入钳制：非法值回退到下限，超出范围自动收敛
+function clampNumber(value: number, min: number, max: number) {
+  if (!Number.isFinite(value)) return min
+  return Math.min(max, Math.max(min, value))
+}
 
 function createEmptyMonthlyExtraIncomes() {
   return MONTH_OPTIONS.map(() => ({ taxable: '', nonTaxable: '' }))
@@ -28,15 +34,16 @@ export default function Calculator({ onSave }: CalculatorProps) {
   const [selectedDeductions, setSelectedDeductions] = useState<string[]>([])
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth() + 1)
   const [monthlyExtraIncomes, setMonthlyExtraIncomes] = useState(createEmptyMonthlyExtraIncomes)
+  const [yearEndBonus, setYearEndBonus] = useState('')
+  const [bonusTaxMode, setBonusTaxMode] = useState<BonusTaxMode>('combined')
   const [result, setResult] = useState<CalcResult | null>(null)
 
   const cities = useMemo(() => getCityList(), [])
   const deductionOptions = useMemo(() => getDeductionOptions(), [])
 
-  // Sync housing rate when city changes
+  // Sync housing rate when city changes（单一数据源：calculator.ts 的 CITY_LIMITS）
   useEffect(() => {
-    const cityRates: Record<string, number> = { beijing: 0.12, shanghai: 0.07, guangzhou: 0.12, shenzhen: 0.05, hangzhou: 0.12, chengdu: 0.12, nanjing: 0.12, wuhan: 0.12 }
-    setHousingRate(cityRates[city] || 0.07)
+    setHousingRate(getCityHousingRate(city))
   }, [city])
 
   // Sum selected deductions
@@ -65,9 +72,11 @@ export default function Calculator({ onSave }: CalculatorProps) {
       },
       monthlyExtraIncomes,
       selectedMonth,
+      yearEndBonus: Math.max(0, parseFloat(yearEndBonus) || 0),
+      bonusTaxMode,
     })
     setResult(calcResult)
-  }, [salary, salaryMode, city, specialDeduction, housingRate, pensionRate, medicalRate, unemploymentRate, monthlyExtraIncomes, selectedMonth])
+  }, [salary, salaryMode, city, specialDeduction, housingRate, pensionRate, medicalRate, unemploymentRate, monthlyExtraIncomes, selectedMonth, yearEndBonus, bonusTaxMode])
 
   useEffect(() => { doCalculate() }, [doCalculate])
 
@@ -211,6 +220,61 @@ export default function Calculator({ onSave }: CalculatorProps) {
           <p className="text-xs text-gray-500 mt-2">计税部分参与累计预扣个税计算；不计税部分仅计入到手收入。</p>
         </div>
 
+        {/* Year-end bonus */}
+        <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 md:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-medium text-gray-700">年终奖（全年一次性）</h3>
+              <p className="text-xs text-gray-500 mt-0.5">默认发放于 12 月，可选择计税口径</p>
+            </div>
+            <div className="sm:w-52">
+              <input
+                type="number"
+                min="0"
+                step="1000"
+                value={yearEndBonus}
+                onChange={(event) => setYearEndBonus(event.target.value)}
+                placeholder="如 36000"
+                aria-label="年终奖金额"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+              />
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2" role="radiogroup" aria-label="年终奖计税口径">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={bonusTaxMode === 'combined'}
+              onClick={() => setBonusTaxMode('combined')}
+              className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition ${
+                bonusTaxMode === 'combined'
+                  ? 'border-emerald-500 bg-emerald-600 text-white'
+                  : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              并入综合所得
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={bonusTaxMode === 'separate'}
+              onClick={() => setBonusTaxMode('separate')}
+              className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition ${
+                bonusTaxMode === 'separate'
+                  ? 'border-emerald-500 bg-emerald-600 text-white'
+                  : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              单独计税
+            </button>
+            <span className="text-xs text-gray-500">
+              {bonusTaxMode === 'combined'
+                ? '并入 12 月综合所得，随累计预扣法计税'
+                : '年终奖 ÷ 12 查月度税率表独立计税'}
+            </span>
+          </div>
+        </div>
+
         {/* City */}
         <div className="mt-4 mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">所在城市</label>
@@ -251,7 +315,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
                       max="20"
                       step="0.5"
                       value={pensionRate}
-                      onChange={(e) => setPensionRate(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => setPensionRate(clampNumber(parseFloat(e.target.value), 0, 20))}
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
                     />
                     <span className="text-sm text-slate-400">%</span>
@@ -266,7 +330,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
                       max="10"
                       step="0.5"
                       value={medicalRate}
-                      onChange={(e) => setMedicalRate(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => setMedicalRate(clampNumber(parseFloat(e.target.value), 0, 10))}
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
                     />
                     <span className="text-sm text-slate-400">%</span>
@@ -281,7 +345,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
                       max="2"
                       step="0.1"
                       value={unemploymentRate}
-                      onChange={(e) => setUnemploymentRate(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => setUnemploymentRate(clampNumber(parseFloat(e.target.value), 0, 2))}
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
                     />
                     <span className="text-sm text-slate-400">%</span>
@@ -296,7 +360,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
                       max="24"
                       step="1"
                       value={Math.round(housingRate * 100)}
-                      onChange={(e) => setHousingRate((parseFloat(e.target.value) || 0) / 100)}
+                      onChange={(e) => setHousingRate(clampNumber(parseFloat(e.target.value), 0, 24) / 100)}
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
                     />
                     <span className="text-sm text-slate-400">%</span>
@@ -304,7 +368,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
                 </div>
               </div>
               <p className="text-xs text-slate-400">
-                以上为个人缴纳比例。切换城市会自动更新公积金默认比例，其他比例可手动调整。
+                以上为个人缴纳比例。切换城市会自动更新公积金默认比例，其他比例可手动调整；超出范围（养老 0-20%、医疗 0-10%、失业 0-2%、公积金 0-24%）的值会自动收敛。
               </p>
             </div>
           )}
@@ -364,10 +428,16 @@ export default function Calculator({ onSave }: CalculatorProps) {
                 </div>
               </div>
             </div>
-            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-sm">
               <SummaryItem label="年基本工资" value={result.annual.baseSalary} />
+              {result.annual.yearEndBonus > 0 && (
+                <SummaryItem label="年终奖" value={result.annual.yearEndBonus} />
+              )}
               <SummaryItem label="年五险一金" value={result.annual.insurance} negative />
               <SummaryItem label="年个税" value={result.annual.tax} negative />
+              {result.annual.bonusTax > 0 && (
+                <SummaryItem label="年终奖个税（单独计税）" value={result.annual.bonusTax} negative />
+              )}
               <SummaryItem label="计税额外收入" value={result.annual.taxableExtraIncome} />
               <SummaryItem label="不计税额外收入" value={result.annual.nonTaxableExtraIncome} />
             </div>
@@ -416,8 +486,14 @@ export default function Calculator({ onSave }: CalculatorProps) {
                         <span>个税</span>
                         <span className="text-red-500">-¥{formatMoney(monthData.tax)}</span>
                       </div>
-                      {(monthData.taxableExtraIncome > 0 || monthData.nonTaxableExtraIncome > 0) && (
+                      {(monthData.taxableExtraIncome > 0 || monthData.nonTaxableExtraIncome > 0 || monthData.yearEndBonus > 0) && (
                         <div className={`pt-2 mt-2 border-t space-y-1 ${isSelected ? 'border-white/10' : 'border-slate-200'}`}>
+                          {monthData.yearEndBonus > 0 && (
+                            <div className="flex justify-between text-emerald-600">
+                              <span>年终奖</span>
+                              <span>+¥{formatMoney(monthData.yearEndBonus)}</span>
+                            </div>
+                          )}
                           {monthData.taxableExtraIncome > 0 && (
                             <div className="flex justify-between text-emerald-600">
                               <span>计税额外</span>
@@ -451,6 +527,9 @@ export default function Calculator({ onSave }: CalculatorProps) {
             </div>
             <div className="space-y-3">
               <DetailRow label="基础税前月薪" value={result.monthly.baseSalary} />
+              {result.monthly.yearEndBonus > 0 && (
+                <DetailRow label="年终奖（全年一次性）" value={result.monthly.yearEndBonus} />
+              )}
               {result.monthly.taxableExtraIncome > 0 && (
                 <DetailRow label="计税额外收入" value={result.monthly.taxableExtraIncome} />
               )}
@@ -463,7 +542,10 @@ export default function Calculator({ onSave }: CalculatorProps) {
               <DetailRow label={`失业保险（${result.monthly.insurance.rates.unemployment * 100}%）`} value={result.monthly.insurance.unemployment} negative />
               <DetailRow label={`住房公积金（${Math.round(result.monthly.insurance.rates.housing * 100)}%）`} value={result.monthly.insurance.housing} negative />
               <DetailRow label="五险一金合计" value={result.monthly.insurance.total} negative bold />
-              <DetailRow label="个人所得税" value={result.monthly.tax} negative bold />
+              <DetailRow label="个人所得税" value={result.monthly.tax - result.monthly.bonusTax} negative bold />
+              {result.monthly.bonusTax > 0 && (
+                <DetailRow label="年终奖个税（单独计税）" value={result.monthly.bonusTax} negative bold />
+              )}
               <div className="flex justify-between py-2 font-semibold text-lg border-t-2 border-gray-200 mt-2 pt-3">
                 <span className="text-emerald-600">到手月薪</span>
                 <span className="text-emerald-600 tabular-nums">¥{formatMoney(result.monthly.netPay)}</span>
@@ -473,8 +555,12 @@ export default function Calculator({ onSave }: CalculatorProps) {
 
           {/* Tax note */}
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-900">
-            <strong>累计预扣法：</strong>年度实际个税 ¥{formatMoney(result.annual.tax)}，
+            <strong>累计预扣法：</strong>年度实际个税 ¥{formatMoney(result.annual.tax)}
+            {result.annual.bonusTax > 0 && <>（含年终奖单独计税 ¥{formatMoney(result.annual.bonusTax)}）</>}，
             已按照 12 个月分别填写的计税额外收入逐月计算。
+            <p className="text-xs text-amber-700 mt-1.5">
+              政策数据适用年度：{POLICY_DATA_YEAR}（个税税率表、社保公积金基数上下限、专项附加扣除标准均按该年度政策整理）。请留意年度政策调整，实际以最新政策与发放口径为准。
+            </p>
           </div>
 
           {onSave && (

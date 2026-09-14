@@ -21,11 +21,15 @@ interface HistoryEntry {
   tax: number
 }
 
+// 历史记录容量上限：超出后保留最新记录，自动移除最早的记录
+const MAX_HISTORY_ENTRIES = 100
+
 export default function DashboardPage() {
   const { navigate } = useHashRoute()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [history, setHistory] = useState<HistoryEntry[]>([])
+  const [storageNotice, setStorageNotice] = useState('')
 
   useEffect(() => {
     auth.getUser().then(({ user }) => {
@@ -43,11 +47,23 @@ export default function DashboardPage() {
     const saved: HistoryEntry[] = []
     try {
       const raw = localStorage.getItem(`netpay_history_${userId}`)
-      if (raw) saved.push(...JSON.parse(raw))
+      if (raw) saved.push(...(JSON.parse(raw) as HistoryEntry[]).slice(0, MAX_HISTORY_ENTRIES))
     } catch (e) {
       console.error('加载历史记录失败', e)
     }
     setHistory(saved)
+  }
+
+  // 持久化历史记录，返回是否写入成功
+  const persistHistory = (updated: HistoryEntry[]): boolean => {
+    if (!user) return false
+    try {
+      localStorage.setItem(`netpay_history_${user.id}`, JSON.stringify(updated))
+      return true
+    } catch (e) {
+      console.error('保存失败', e)
+      return false
+    }
   }
 
   const handleSave = (result: CalcResult) => {
@@ -65,23 +81,25 @@ export default function DashboardPage() {
       insurance: result.monthly.insurance.total,
       tax: result.monthly.tax,
     }
-    const updated = [entry, ...history]
+    const withNewEntry = [entry, ...history]
+    const overflow = withNewEntry.length > MAX_HISTORY_ENTRIES
+    const updated = withNewEntry.slice(0, MAX_HISTORY_ENTRIES)
     setHistory(updated)
-    try {
-      localStorage.setItem(`netpay_history_${user!.id}`, JSON.stringify(updated))
-    } catch (e) {
-      console.error('保存失败', e)
+    const persisted = persistHistory(updated)
+    if (!persisted) {
+      setStorageNotice('本地存储空间不足，最新记录暂未写入浏览器存储，请删除部分历史记录后重试。')
+    } else if (overflow) {
+      setStorageNotice(`历史记录上限为 ${MAX_HISTORY_ENTRIES} 条，最早的记录已自动移除。`)
+    } else {
+      setStorageNotice('')
     }
   }
 
   const handleDelete = (id: number) => {
     const updated = history.filter(h => h.id !== id)
     setHistory(updated)
-    try {
-      localStorage.setItem(`netpay_history_${user!.id}`, JSON.stringify(updated))
-    } catch (e) {
-      console.error('删除失败', e)
-    }
+    const persisted = persistHistory(updated)
+    setStorageNotice(persisted ? '' : '本地存储空间不足，删除结果暂未写入浏览器存储。')
   }
 
   if (loading) {
@@ -120,6 +138,11 @@ export default function DashboardPage() {
             <h2 className="font-semibold mb-4 text-slate-200">
               历史记录（{history.length}）
             </h2>
+            {storageNotice && (
+              <div className="mb-4 px-4 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm">
+                {storageNotice}
+              </div>
+            )}
             {history.length === 0 ? (
               <div className="dashboard-panel p-8 text-center">
                 <p className="text-slate-400">暂无记录，完成计算后点击"保存此次计算"</p>

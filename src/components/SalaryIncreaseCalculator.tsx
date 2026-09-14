@@ -1,5 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { formatMoney } from '../utils/calculator'
+
+const DIALOG_TITLE_ID = 'salary-increase-dialog-title'
 
 interface SalaryIncreaseCalculatorProps {
   onClose: () => void
@@ -84,6 +86,44 @@ function JobConfigPanel({ title, description, accent, job, onChange }: JobConfig
 export default function SalaryIncreaseCalculator({ onClose }: SalaryIncreaseCalculatorProps) {
   const [prevJob, setPrevJob] = useState<JobConfig>(createDefaultJobConfig)
   const [currJob, setCurrJob] = useState<JobConfig>(createDefaultJobConfig)
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  // ESC 关闭 + Tab 焦点陷阱，保持键盘焦点在对话框内循环
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
+        return
+      }
+      if (event.key !== 'Tab') return
+
+      const panel = panelRef.current
+      if (!panel) return
+      const focusable = panel.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      )
+      if (focusable.length === 0) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
+  // 打开时聚焦对话框面板，便于键盘操作与屏幕阅读器
+  useEffect(() => {
+    panelRef.current?.focus()
+  }, [])
 
   const prevResult = useMemo(() => calcJob(prevJob), [prevJob])
   const currResult = useMemo(() => calcJob(currJob), [currJob])
@@ -114,11 +154,18 @@ export default function SalaryIncreaseCalculator({ onClose }: SalaryIncreaseCalc
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-200">
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={DIALOG_TITLE_ID}
+        tabIndex={-1}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-200 outline-none"
+      >
         {/* Header */}
         <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">涨薪计算器</h2>
+            <h2 id={DIALOG_TITLE_ID} className="text-xl font-bold text-slate-900">涨薪计算器</h2>
             <p className="text-sm text-slate-500">分别填写两份工作的税前薪资与年终奖，仅对比税前收入</p>
           </div>
           <button onClick={onClose} aria-label="关闭" className="p-2 hover:bg-slate-200 rounded-full transition">

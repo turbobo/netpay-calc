@@ -1,8 +1,13 @@
 // 税后工资计算核心逻辑
 // 基于 2024 年中国个人所得税法及五险一金政策
 
-// 个税税率表（综合所得，按月换算）
-const TAX_BRACKETS = [
+// 政策数据适用年度：下方个税税率表、城市缴费基数上下限、专项附加扣除标准均按此年度政策整理。
+// 年终奖单独计税政策依据财税〔2018〕164 号，现行有效期延续至 2027 年 12 月 31 日。
+export const POLICY_DATA_YEAR = 2024
+
+// 按月换算的综合所得税率表
+// 用于年终奖单独计税：年终奖 ÷ 12 查表确定适用税率与速算扣除数
+const MONTHLY_TAX_BRACKETS = [
   { min: 0, max: 3000, rate: 0.03, deduction: 0 },
   { min: 3000, max: 12000, rate: 0.10, deduction: 210 },
   { min: 12000, max: 25000, rate: 0.20, deduction: 1410 },
@@ -44,6 +49,11 @@ const CITY_LIMITS: Record<string, { min: number; max: number; label: string; hou
   default: { min: 3000, max: 20000, label: '自定义', housingRate: 0.07 },
 }
 
+// 城市公积金默认比例：UI 与计算共用的单一数据源
+export function getCityHousingRate(city: string): number {
+  return (CITY_LIMITS[city] || CITY_LIMITS.default).housingRate
+}
+
 // 专项附加扣除标准（月）
 const SPECIAL_DEDUCTIONS: Record<string, number> = {
   childEducation: 2000,
@@ -71,8 +81,12 @@ export interface MonthResult {
   gross: number
   taxableExtraIncome: number
   nonTaxableExtraIncome: number
+  // 年终奖（全年一次性）默认计入 12 月
+  yearEndBonus: number
   insurance: InsuranceResult
   tax: number
+  // 年终奖单独计税税额（并入综合所得模式为 0）
+  bonusTax: number
   cumulativeTaxableIncome: number
   netPay: number
 }
@@ -83,6 +97,8 @@ export interface CalcResult {
     baseSalary: number
     taxableExtraIncome: number
     nonTaxableExtraIncome: number
+    yearEndBonus: number
+    bonusTax: number
     monthlyExtraIncomes: { taxable: number; nonTaxable: number }[]
     monthlyResults: MonthResult[]
     gross: number
@@ -94,6 +110,9 @@ export interface CalcResult {
   cityInfo: { min: number; max: number; label: string; housingRate: number }
 }
 
+// 年终奖计税口径：并入综合所得（累计预扣）或单独计税（月度换算税率表）
+export type BonusTaxMode = 'combined' | 'separate'
+
 interface CalcParams {
   salary: number
   city?: string
@@ -101,6 +120,8 @@ interface CalcParams {
   customRates?: { pension?: number; medical?: number; unemployment?: number; housing?: number }
   monthlyExtraIncomes?: { taxable?: string | number; nonTaxable?: string | number }[]
   selectedMonth?: number
+  yearEndBonus?: number
+  bonusTaxMode?: BonusTaxMode
 }
 
 // 计算五险一金
@@ -167,6 +188,19 @@ function calculateAnnualTaxCumulative(monthlyTaxableDeltas: number[]) {
   return { months, annualTax: Math.round(cumulativeTaxPaid * 100) / 100 }
 }
 
+// 年终奖单独计税：年终奖 ÷ 12 按月表确定税率与速算扣除数，税额 = 年终奖 × 税率 - 速算扣除数
+export function calculateBonusTaxSeparate(bonus: number): number {
+  const safeBonus = Math.max(0, Number(bonus) || 0)
+  if (safeBonus === 0) return 0
+
+  const monthlyAverage = safeBonus / MONTH_COUNT
+  const bracket = MONTHLY_TAX_BRACKETS.find(
+    item => monthlyAverage > item.min && monthlyAverage <= item.max,
+  ) || MONTHLY_TAX_BRACKETS[MONTHLY_TAX_BRACKETS.length - 1]
+
+  return Math.round(Math.max(0, safeBonus * bracket.rate - bracket.deduction) * 100) / 100
+}
+
 // 主计算函数
 export function calculateNetPay({
   salary,
@@ -175,29 +209,42 @@ export function calculateNetPay({
   customRates = {},
   monthlyExtraIncomes = [],
   selectedMonth = 1,
+  yearEndBonus = 0,
+  bonusTaxMode = 'combined',
 }: CalcParams): CalcResult {
   const insurance = calculateInsurance(salary, city, customRates)
   const normalizedExtraIncomes = normalizeMonthlyExtraIncomes(monthlyExtraIncomes)
   const safeSelectedMonth = Math.min(MONTH_COUNT, Math.max(1, Number(selectedMonth) || 1))
+  const safeYearEndBonus = Math.max(0, Number(yearEndBonus) || 0)
+  // 并入综合所得：年终奖计入 12 月累计预扣；单独计税：按月度换算税率表独立计税
+  const combinedBonusIncome = bonusTaxMode === 'separate' ? 0 : safeYearEndBonus
+  const separateBonusTax = bonusTaxMode === 'separate' ? calculateBonusTaxSeparate(safeYearEndBonus) : 0
+
   // 月度增量允许为负，扣除缺口由累计预扣法在累计层面抵扣
   const taxableBaseBeforeExtra = salary - insurance.total - TAX_THRESHOLD - specialDeduction
   const monthlyTaxableDeltas = normalizedExtraIncomes.map(
-    item => taxableBaseBeforeExtra + item.taxable,
+    (item, index) => taxableBaseBeforeExtra + item.taxable + (index === MONTH_COUNT - 1 ? combinedBonusIncome : 0),
   )
   const annualTaxResult = calculateAnnualTaxCumulative(monthlyTaxableDeltas)
   const monthlyResults: MonthResult[] = annualTaxResult.months.map((taxResult, index) => {
     const extraIncome = normalizedExtraIncomes[index]
-    const gross = salary + extraIncome.taxable + extraIncome.nonTaxable
+    const isBonusMonth = index === MONTH_COUNT - 1
+    const monthBonus = isBonusMonth ? safeYearEndBonus : 0
+    const monthBonusTax = isBonusMonth ? separateBonusTax : 0
+    const gross = salary + extraIncome.taxable + extraIncome.nonTaxable + monthBonus
+    const tax = Math.round((taxResult.tax + monthBonusTax) * 100) / 100
     return {
       month: index + 1,
       baseSalary: salary,
       gross,
       taxableExtraIncome: extraIncome.taxable,
       nonTaxableExtraIncome: extraIncome.nonTaxable,
+      yearEndBonus: monthBonus,
       insurance,
-      tax: taxResult.tax,
+      tax,
+      bonusTax: monthBonusTax,
       cumulativeTaxableIncome: taxResult.cumulativeTaxableIncome,
-      netPay: Math.round((gross - insurance.total - taxResult.tax) * 100) / 100,
+      netPay: Math.round((gross - insurance.total - tax) * 100) / 100,
     }
   })
   const selectedMonthResult = monthlyResults[safeSelectedMonth - 1]
@@ -205,9 +252,9 @@ export function calculateNetPay({
   const annualTaxableExtraIncome = normalizedExtraIncomes.reduce((total, item) => total + item.taxable, 0)
   const annualNonTaxableExtraIncome = normalizedExtraIncomes.reduce((total, item) => total + item.nonTaxable, 0)
   const annualBaseSalary = salary * MONTH_COUNT
-  const annualGross = annualBaseSalary + annualTaxableExtraIncome + annualNonTaxableExtraIncome
+  const annualGross = annualBaseSalary + annualTaxableExtraIncome + annualNonTaxableExtraIncome + safeYearEndBonus
   const annualInsurance = Math.round(insurance.total * MONTH_COUNT * 100) / 100
-  const annualTax = annualTaxResult.annualTax
+  const annualTax = Math.round((annualTaxResult.annualTax + separateBonusTax) * 100) / 100
   const annualNet = Math.round((annualGross - annualInsurance - annualTax) * 100) / 100
 
   return {
@@ -216,6 +263,8 @@ export function calculateNetPay({
       baseSalary: annualBaseSalary,
       taxableExtraIncome: annualTaxableExtraIncome,
       nonTaxableExtraIncome: annualNonTaxableExtraIncome,
+      yearEndBonus: safeYearEndBonus,
+      bonusTax: separateBonusTax,
       monthlyExtraIncomes: normalizedExtraIncomes,
       monthlyResults,
       gross: annualGross,
