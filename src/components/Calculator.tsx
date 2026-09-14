@@ -34,6 +34,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showComparison, setShowComparison] = useState(false)
   const [activeTab, setActiveTab] = useState<'income' | 'insurance' | 'bonus'>('income')
+  const [showInsuranceHelp, setShowInsuranceHelp] = useState(false)
   const [specialDeduction, setSpecialDeduction] = useState(0)
   const [selectedDeductions, setSelectedDeductions] = useState<string[]>([])
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth() + 1)
@@ -387,7 +388,29 @@ export default function Calculator({ onSave }: CalculatorProps) {
                     className="w-full max-w-52 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
                   />
                 </div>
-                <p className="text-xs text-slate-400">留空则按城市上下限自动计算，手动输入后生效全部 12 个月。超出范围的值会自动收敛。</p>
+                <p className="text-xs text-slate-400">留空则按城市上下限自动计算，手动输入后生效全部 12 个月。</p>
+                <button
+                  onClick={() => setShowInsuranceHelp(!showInsuranceHelp)}
+                  className="text-xs text-emerald-600 hover:text-emerald-700 hover:underline mt-2 flex items-center gap-1"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {showInsuranceHelp ? '收起说明' : '了解更多'}
+                </button>
+                {showInsuranceHelp && (
+                  <div className="mt-3 p-3 bg-slate-100 rounded-lg text-xs text-slate-600 leading-relaxed">
+                    <p className="mb-2">
+                      <strong>个人缴纳比例说明：</strong>以上比例为个人承担部分，切换城市会自动更新公积金默认比例，其他比例可手动调整。
+                    </p>
+                    <p className="mb-2">
+                      <strong>范围限制：</strong>养老 0-20%、医疗 0-10%、失业 0-2%、公积金 0-24%，超出范围的值会自动收敛。
+                    </p>
+                    <p>
+                      <strong>缴费基数：</strong>社保与公积金基数可分开设置，留空则按城市上下限自动计算，手动输入后生效全部 12 个月。
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
