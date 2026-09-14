@@ -689,9 +689,9 @@ function DonutChart({ netPay, insurance, tax }: { netPay: number; insurance: num
   const pctNet = netPay / total
   const pctIns = insurance / total
 
-  const r = 40
-  const cx = 50
-  const cy = 50
+  const r = 55
+  const cx = 70
+  const cy = 70
   const circumference = 2 * Math.PI * r
 
   const len1 = circumference * pctNet
@@ -699,15 +699,15 @@ function DonutChart({ netPay, insurance, tax }: { netPay: number; insurance: num
   const len3 = circumference - len1 - len2
 
   return (
-    <svg width="100" height="100" viewBox="0 0 100 100" className="drop-shadow-sm">
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#22c55e" strokeWidth="14"
-        strokeDasharray={`${len1} ${circumference - len1}`} strokeDashoffset={0} transform="rotate(-90 50 50)" />
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f59e0b" strokeWidth="14"
-        strokeDasharray={`${len2} ${circumference - len2}`} strokeDashoffset={-len1} transform="rotate(-90 50 50)" />
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#ef4444" strokeWidth="14"
-        strokeDasharray={`${len3} ${circumference - len3}`} strokeDashoffset={-(len1 + len2)} transform="rotate(-90 50 50)" />
-      <text x={cx} y={cy - 4} textAnchor="middle" className="text-[10px] fill-slate-400">到手</text>
-      <text x={cx} y={cy + 10} textAnchor="middle" className="text-[13px] font-bold fill-white">
+    <svg width="140" height="140" viewBox="0 0 140 140" className="drop-shadow-lg">
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#22c55e" strokeWidth="18"
+        strokeDasharray={`${len1} ${circumference - len1}`} strokeDashoffset={0} transform="rotate(-90 70 70)" />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f59e0b" strokeWidth="18"
+        strokeDasharray={`${len2} ${circumference - len2}`} strokeDashoffset={-len1} transform="rotate(-90 70 70)" />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#ef4444" strokeWidth="18"
+        strokeDasharray={`${len3} ${circumference - len3}`} strokeDashoffset={-(len1 + len2)} transform="rotate(-90 70 70)" />
+      <text x={cx} y={cy - 6} textAnchor="middle" className="text-[11px] fill-slate-300 font-medium">到手</text>
+      <text x={cx} y={cy + 12} textAnchor="middle" className="text-[18px] font-bold fill-white">
         {Math.round(pctNet * 100)}%
       </text>
     </svg>
