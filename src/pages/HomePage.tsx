@@ -18,7 +18,7 @@ export default function HomePage() {
             看清每个月，算准全年到手收入
           </h1>
           <p className="text-base md:text-lg text-slate-300 max-w-2xl leading-relaxed">
-            统一管理月薪、奖金、补贴和福利，按累计预扣法拆解 12 个月个税与实际到手收入。
+            录入月薪 / 年薪、年终奖与每月奖金补贴，自动计算城市五险一金、专项附加扣除与累计预扣个税，拆解全年 12 个月到手收入，并支持跳槽涨薪对比。
           </p>
         </div>
 
@@ -36,7 +36,7 @@ export default function HomePage() {
             </div>
             <p className="eyebrow text-emerald-300 mb-3">01 · 覆盖范围</p>
             <h3 className="font-semibold mb-1">覆盖 8 大城市</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">自动匹配当地五险一金基数与默认公积金比例。</p>
+            <p className="text-sm text-slate-400 leading-relaxed">自动匹配城市缴费基数上下限与公积金默认比例，社保、公积金基数可分开调整。</p>
           </div>
           <div className="border border-white/10 bg-white/[0.06] p-5 rounded-xl text-white group hover:bg-white/[0.08] transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-500/30">
             <div className="mb-4 flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 group-hover:scale-110 transition-transform">
@@ -46,7 +46,7 @@ export default function HomePage() {
             </div>
             <p className="eyebrow text-emerald-300 mb-3">02 · 收入明细</p>
             <h3 className="font-semibold mb-1">逐月收入明细</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">月薪、奖金、补贴、福利和扣除项一目了然。</p>
+            <p className="text-sm text-slate-400 leading-relaxed">月薪、年终奖、计税与不计税额外收入逐月录入，全年明细清晰呈现。</p>
           </div>
           <div className="border border-white/10 bg-white/[0.06] p-5 rounded-xl text-white group hover:bg-white/[0.08] transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-500/30">
             <div className="mb-4 flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 group-hover:scale-110 transition-transform">
@@ -56,7 +56,7 @@ export default function HomePage() {
             </div>
             <p className="eyebrow text-emerald-300 mb-3">03 · 个税计算</p>
             <h3 className="font-semibold mb-1">累计预扣计算</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">根据每月实际计税收入计算全年个税变化。</p>
+            <p className="text-sm text-slate-400 leading-relaxed">按官方累计预扣法逐月计算个税，年终奖支持并入综合所得 / 单独计税。</p>
           </div>
         </div>
 
