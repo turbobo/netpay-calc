@@ -121,6 +121,8 @@ interface CalcParams {
   salary: number
   city?: string
   specialDeduction?: number
+  // 其他扣除（补充医保、企业年金等税前扣除项，月度金额）
+  otherDeduction?: number
   customRates?: { pension?: number; medical?: number; unemployment?: number; housing?: number }
   monthlyExtraIncomes?: { taxable?: string | number; nonTaxable?: string | number }[]
   selectedMonth?: number
@@ -216,6 +218,7 @@ export function calculateNetPay({
   salary,
   city = 'default',
   specialDeduction = 0,
+  otherDeduction = 0,
   customRates = {},
   monthlyExtraIncomes = [],
   selectedMonth = 1,
@@ -235,7 +238,8 @@ export function calculateNetPay({
   const separateBonusTax = bonusTaxMode === 'separate' ? calculateBonusTaxSeparate(safeYearEndBonus) : 0
 
   // 月度增量允许为负，扣除缺口由累计预扣法在累计层面抵扣
-  const taxableBaseBeforeExtra = salary - insurance.total - TAX_THRESHOLD - specialDeduction
+  const safeOtherDeduction = Math.max(0, Number(otherDeduction) || 0)
+  const taxableBaseBeforeExtra = salary - insurance.total - TAX_THRESHOLD - specialDeduction - safeOtherDeduction
   const monthlyTaxableDeltas = normalizedExtraIncomes.map(
     (item, index) => taxableBaseBeforeExtra + item.taxable + (index === MONTH_COUNT - 1 ? combinedBonusIncome : 0),
   )
