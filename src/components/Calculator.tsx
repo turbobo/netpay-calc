@@ -33,6 +33,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
   const [housingBase, setHousingBase] = useState('')
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showComparison, setShowComparison] = useState(false)
+  const [activeTab, setActiveTab] = useState<'income' | 'insurance' | 'bonus'>('income')
   const [specialDeduction, setSpecialDeduction] = useState(0)
   const [selectedDeductions, setSelectedDeductions] = useState<string[]>([])
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth() + 1)
@@ -118,254 +119,254 @@ export default function Calculator({ onSave }: CalculatorProps) {
 
   return (
     <div className="w-full max-w-7xl mx-auto">
-      {/* Input area */}
-      <div className="dashboard-panel p-5 md:p-7 mb-6">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-2 pb-5 mb-5 border-b border-slate-200">
-          <div>
-            <p className="eyebrow mb-2">Income setup</p>
-            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-950">收入与扣除设置</h2>
-          </div>
-          <p className="text-sm text-slate-500">修改任意字段后自动重新计算</p>
-          <button
-            onClick={() => setShowComparison(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition shadow-sm"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            涨薪对比
-          </button>
-        </div>
-
-        {/* Salary mode toggle */}
-        <div className="flex items-center gap-2 mb-4">
-          <label className="block text-sm font-medium text-gray-700">
-            {salaryMode === 'monthly' ? '税前月薪（元）' : '税前年薪（元）'}
-            <span className="ml-2 text-xs font-normal text-emerald-600">自动应用 12 个月</span>
-          </label>
-          <button
-            onClick={() => setSalaryMode(prev => prev === 'monthly' ? 'annual' : 'monthly')}
-            className="ml-auto text-xs px-2.5 py-1 rounded-full border border-emerald-200 text-emerald-600 hover:bg-emerald-50 transition"
-          >
-            切换{salaryMode === 'monthly' ? '年薪' : '月薪'}模式
-          </button>
-        </div>
-        <FormattedInput
-          value={salary}
-          onChange={setSalary}
-          prefix="¥"
-          placeholder={salaryMode === 'monthly' ? '如 15,000' : '如 300,000'}
-          className="input text-lg font-semibold"
-        />
-
-        {/* Monthly extra income */}
-        <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 md:p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+      {/* Input area with tabs */}
+      <div className="dashboard-panel mb-6">
+        {/* Panel header */}
+        <div className="px-5 md:px-7 pt-5 md:pt-7 pb-4 border-b border-slate-200">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-2 mb-5">
             <div>
-              <h3 className="text-sm font-medium text-gray-700">每月额外收入</h3>
-              <p className="text-xs text-gray-500 mt-0.5">基础月薪自动应用全年；奖金、补贴和福利可按月设置</p>
+              <p className="eyebrow mb-2">Income setup</p>
+              <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-950">收入与扣除设置</h2>
             </div>
-            <select
-              value={selectedMonth}
-              onChange={(event) => setSelectedMonth(Number(event.target.value))}
-              aria-label="选择额外收入月份"
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
-            >
-              {MONTH_OPTIONS.map(month => (
-                <option key={month} value={month}>{month} 月</option>
-              ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <div className="flex items-center justify-between gap-2 text-sm text-gray-600 mb-1">
-                <label htmlFor="taxable-extra-income">计税额外收入（元）</label>
-                <button type="button" onClick={() => applyExtraIncomeToAllMonths('taxable')} className="text-xs text-emerald-600 hover:text-emerald-800">
-                  应用全年
-                </button>
-              </div>
-              <FormattedInput
-                id="taxable-extra-income"
-                value={selectedExtraIncome.taxable}
-                onChange={(v) => updateMonthlyExtraIncome('taxable', v)}
-                prefix="¥"
-                placeholder="如奖金、佣金"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
-              />
-            </div>
-            <div>
-              <div className="flex items-center justify-between gap-2 text-sm text-gray-600 mb-1">
-                <label htmlFor="non-taxable-extra-income">不计税额外收入（元）</label>
-                <button type="button" onClick={() => applyExtraIncomeToAllMonths('nonTaxable')} className="text-xs text-emerald-600 hover:text-emerald-800">
-                  应用全年
-                </button>
-              </div>
-              <FormattedInput
-                id="non-taxable-extra-income"
-                value={selectedExtraIncome.nonTaxable}
-                onChange={(v) => updateMonthlyExtraIncome('nonTaxable', v)}
-                prefix="¥"
-                placeholder="如报销、免税补贴"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
-              />
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 mt-3">
-            <button type="button" onClick={() => applyExtraIncomeToAllMonths()} className="px-3 py-1.5 rounded-md bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition">
-              将 {selectedMonth} 月全部应用全年
-            </button>
-            <button type="button" onClick={clearAllExtraIncomes} className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-600 text-xs hover:bg-gray-50 transition">
-              清空全年额外收入
-            </button>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">计税部分参与累计预扣个税计算；不计税部分仅计入到手收入。</p>
-        </div>
-
-        {/* Year-end bonus */}
-        <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 md:p-5">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-medium text-gray-700">年终奖（全年一次性）</h3>
-              <p className="text-xs text-gray-500 mt-0.5">默认发放于 12 月，可选择计税口径</p>
-            </div>
-            <div className="sm:w-52">
-              <FormattedInput
-                value={yearEndBonus}
-                onChange={setYearEndBonus}
-                prefix="¥"
-                placeholder="如 36,000"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
-              />
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2" role="radiogroup" aria-label="年终奖计税口径">
             <button
-              type="button"
-              role="radio"
-              aria-checked={bonusTaxMode === 'combined'}
-              onClick={() => setBonusTaxMode('combined')}
-              className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition ${
-                bonusTaxMode === 'combined'
-                  ? 'border-emerald-500 bg-emerald-600 text-white'
-                  : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
-              }`}
+              onClick={() => setShowComparison(true)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition shadow-sm"
             >
-              并入综合所得
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={bonusTaxMode === 'separate'}
-              onClick={() => setBonusTaxMode('separate')}
-              className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition ${
-                bonusTaxMode === 'separate'
-                  ? 'border-emerald-500 bg-emerald-600 text-white'
-                  : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              单独计税
-            </button>
-            <span className="text-xs text-gray-500">
-              {bonusTaxMode === 'combined'
-                ? '并入 12 月综合所得，随累计预扣法计税'
-                : '年终奖 ÷ 12 查月度税率表独立计税'}
-            </span>
-          </div>
-        </div>
-
-        {/* City */}
-        <div className="mt-4 mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">所在城市</label>
-          <select value={city} onChange={(e) => setCity(e.target.value)} className="input">
-            {cities.map(c => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Insurance settings */}
-        <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50/50 overflow-hidden">
-          <button
-            onClick={() => setShowInsuranceSettings(!showInsuranceSettings)}
-            className="w-full px-4 py-3 flex items-center justify-between text-sm font-medium text-slate-700 hover:bg-slate-100 transition"
-          >
-            <span className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
-              社保公积金比例
-              <span className="text-xs text-slate-400 font-normal">养老{pensionRate}% / 医疗{medicalRate}% / 失业{unemploymentRate}% / 公积金{housingPercent}%</span>
-            </span>
-            <svg className={`w-4 h-4 text-slate-400 transition-transform ${showInsuranceSettings ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+              涨薪对比
+            </button>
+          </div>
 
-          {showInsuranceSettings && (
-            <div className="px-4 pb-4 pt-2 border-t border-slate-200 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">养老保险</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="0"
-                      max="20"
-                      step="0.5"
-                      value={pensionRate}
-                      onChange={(e) => setPensionRate(clampNumber(parseFloat(e.target.value), 0, 20))}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+          {/* Tab bar */}
+          <div className="flex gap-1 -mb-px" role="tablist">
+            <button
+              role="tab"
+              aria-selected={activeTab === 'income'}
+              onClick={() => setActiveTab('income')}
+              className={`px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition ${
+                activeTab === 'income'
+                  ? 'border-emerald-500 text-emerald-700 bg-emerald-50/50'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              💰 收入
+            </button>
+            <button
+              role="tab"
+              aria-selected={activeTab === 'insurance'}
+              onClick={() => setActiveTab('insurance')}
+              className={`px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition ${
+                activeTab === 'insurance'
+                  ? 'border-emerald-500 text-emerald-700 bg-emerald-50/50'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              🛡️ 五险一金
+            </button>
+            <button
+              role="tab"
+              aria-selected={activeTab === 'bonus'}
+              onClick={() => setActiveTab('bonus')}
+              className={`px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition ${
+                activeTab === 'bonus'
+                  ? 'border-emerald-500 text-emerald-700 bg-emerald-50/50'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              🎁 年终奖与扣除
+            </button>
+          </div>
+        </div>
+
+        {/* Tab content */}
+        <div className="p-5 md:p-7">
+          {/* Tab: Income */}
+          {activeTab === 'income' && (
+            <div className="space-y-5">
+              {/* Salary mode toggle */}
+              <div className="flex items-center gap-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  {salaryMode === 'monthly' ? '税前月薪（元）' : '税前年薪（元）'}
+                  <span className="ml-2 text-xs font-normal text-emerald-600">自动应用 12 个月</span>
+                </label>
+                <button
+                  onClick={() => setSalaryMode(prev => prev === 'monthly' ? 'annual' : 'monthly')}
+                  className="ml-auto text-xs px-2.5 py-1 rounded-full border border-emerald-200 text-emerald-600 hover:bg-emerald-50 transition"
+                >
+                  切换{salaryMode === 'monthly' ? '年薪' : '月薪'}模式
+                </button>
+              </div>
+              <FormattedInput
+                value={salary}
+                onChange={setSalary}
+                prefix="¥"
+                placeholder={salaryMode === 'monthly' ? '如 15,000' : '如 300,000'}
+                className="input text-lg font-semibold"
+              />
+
+              {/* Monthly extra income */}
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 md:p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700">每月额外收入</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">基础月薪自动应用全年；奖金、补贴和福利可按月设置</p>
+                  </div>
+                  <select
+                    value={selectedMonth}
+                    onChange={(event) => setSelectedMonth(Number(event.target.value))}
+                    aria-label="选择额外收入月份"
+                    className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
+                  >
+                    {MONTH_OPTIONS.map(month => (
+                      <option key={month} value={month}>{month} 月</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 text-sm text-gray-600 mb-1">
+                      <label htmlFor="taxable-extra-income">计税额外收入（元）</label>
+                      <button type="button" onClick={() => applyExtraIncomeToAllMonths('taxable')} className="text-xs text-emerald-600 hover:text-emerald-800">
+                        应用全年
+                      </button>
+                    </div>
+                    <FormattedInput
+                      id="taxable-extra-income"
+                      value={selectedExtraIncome.taxable}
+                      onChange={(v) => updateMonthlyExtraIncome('taxable', v)}
+                      prefix="¥"
+                      placeholder="如奖金、佣金"
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
                     />
-                    <span className="text-sm text-slate-400">%</span>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between gap-2 text-sm text-gray-600 mb-1">
+                      <label htmlFor="non-taxable-extra-income">不计税额外收入（元）</label>
+                      <button type="button" onClick={() => applyExtraIncomeToAllMonths('nonTaxable')} className="text-xs text-emerald-600 hover:text-emerald-800">
+                        应用全年
+                      </button>
+                    </div>
+                    <FormattedInput
+                      id="non-taxable-extra-income"
+                      value={selectedExtraIncome.nonTaxable}
+                      onChange={(v) => updateMonthlyExtraIncome('nonTaxable', v)}
+                      prefix="¥"
+                      placeholder="如报销、免税补贴"
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
+                    />
                   </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">医疗保险</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.5"
-                      value={medicalRate}
-                      onChange={(e) => setMedicalRate(clampNumber(parseFloat(e.target.value), 0, 10))}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
-                    />
-                    <span className="text-sm text-slate-400">%</span>
-                  </div>
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  <button type="button" onClick={() => applyExtraIncomeToAllMonths()} className="px-3 py-1.5 rounded-md bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition">
+                    将 {selectedMonth} 月全部应用全年
+                  </button>
+                  <button type="button" onClick={clearAllExtraIncomes} className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-600 text-xs hover:bg-gray-50 transition">
+                    清空全年额外收入
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">失业保险</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="0"
-                      max="2"
-                      step="0.1"
-                      value={unemploymentRate}
-                      onChange={(e) => setUnemploymentRate(clampNumber(parseFloat(e.target.value), 0, 2))}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
-                    />
-                    <span className="text-sm text-slate-400">%</span>
+                <p className="text-xs text-gray-500 mt-2">计税部分参与累计预扣个税计算；不计税部分仅计入到手收入。</p>
+              </div>
+
+              <p className="text-xs text-slate-400">💡 修改任意字段后自动重新计算，无需手动提交。</p>
+            </div>
+          )}
+
+          {/* Tab: Insurance */}
+          {activeTab === 'insurance' && (
+            <div className="space-y-5">
+              {/* City */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">所在城市</label>
+                <select value={city} onChange={(e) => setCity(e.target.value)} className="input">
+                  {cities.map(c => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-400 mt-1">切换城市会自动更新公积金默认比例和社保基数上下限。</p>
+              </div>
+
+              {/* Insurance rates */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 md:p-5">
+                <h3 className="text-sm font-medium text-slate-700 mb-4 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  个人缴纳比例
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">养老保险</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        max="20"
+                        step="0.5"
+                        value={pensionRate}
+                        onChange={(e) => setPensionRate(clampNumber(parseFloat(e.target.value), 0, 20))}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+                      />
+                      <span className="text-sm text-slate-400">%</span>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">住房公积金</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="0"
-                      max="24"
-                      step="1"
-                      value={housingPercent}
-                      onChange={(e) => setHousingPercent(clampNumber(parseFloat(e.target.value), 0, 24))}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
-                    />
-                    <span className="text-sm text-slate-400">%</span>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">医疗保险</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        max="10"
+                        step="0.5"
+                        value={medicalRate}
+                        onChange={(e) => setMedicalRate(clampNumber(parseFloat(e.target.value), 0, 10))}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+                      />
+                      <span className="text-sm text-slate-400">%</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">失业保险</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        max="2"
+                        step="0.1"
+                        value={unemploymentRate}
+                        onChange={(e) => setUnemploymentRate(clampNumber(parseFloat(e.target.value), 0, 2))}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+                      />
+                      <span className="text-sm text-slate-400">%</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">住房公积金</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        max="24"
+                        step="1"
+                        value={housingPercent}
+                        onChange={(e) => setHousingPercent(clampNumber(parseFloat(e.target.value), 0, 24))}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+                      />
+                      <span className="text-sm text-slate-400">%</span>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="mt-4 pt-4 border-t border-slate-200 space-y-3">
+
+              {/* Social/housing base */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 md:p-5 space-y-3">
+                <h3 className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  缴费基数（可选）
+                </h3>
                 <div className="flex items-center gap-3">
                   <label className="text-xs font-medium text-slate-500 whitespace-nowrap w-36">社保基数（元/月）</label>
                   <FormattedInput
@@ -386,41 +387,95 @@ export default function Calculator({ onSave }: CalculatorProps) {
                     className="w-full max-w-52 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
                   />
                 </div>
-                <p className="text-xs text-slate-400">留空则按城市上下限自动计算，手动输入后生效全部 12 个月</p>
+                <p className="text-xs text-slate-400">留空则按城市上下限自动计算，手动输入后生效全部 12 个月。超出范围的值会自动收敛。</p>
               </div>
-              <p className="text-xs text-slate-400">
-                以上为个人缴纳比例。切换城市会自动更新公积金默认比例，其他比例可手动调整；超出范围（养老 0-20%、医疗 0-10%、失业 0-2%、公积金 0-24%）的值会自动收敛。社保与公积金基数可分开设置，留空则按城市上下限自动计算，手动输入后生效全部 12 个月。
-              </p>
+            </div>
+          )}
+
+          {/* Tab: Bonus & Deductions */}
+          {activeTab === 'bonus' && (
+            <div className="space-y-5">
+              {/* Year-end bonus */}
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 md:p-5">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700">年终奖（全年一次性）</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">默认发放于 12 月，可选择计税口径</p>
+                  </div>
+                  <div className="sm:w-52">
+                    <FormattedInput
+                      value={yearEndBonus}
+                      onChange={setYearEndBonus}
+                      prefix="¥"
+                      placeholder="如 36,000"
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2" role="radiogroup" aria-label="年终奖计税口径">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={bonusTaxMode === 'combined'}
+                    onClick={() => setBonusTaxMode('combined')}
+                    className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition ${
+                      bonusTaxMode === 'combined'
+                        ? 'border-emerald-500 bg-emerald-600 text-white'
+                        : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    并入综合所得
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={bonusTaxMode === 'separate'}
+                    onClick={() => setBonusTaxMode('separate')}
+                    className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition ${
+                      bonusTaxMode === 'separate'
+                        ? 'border-emerald-500 bg-emerald-600 text-white'
+                        : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    单独计税
+                  </button>
+                  <span className="text-xs text-gray-500">
+                    {bonusTaxMode === 'combined'
+                      ? '并入 12 月综合所得，随累计预扣法计税'
+                      : '年终奖 ÷ 12 查月度税率表独立计税'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Special deductions */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 md:p-5">
+                <h3 className="text-sm font-medium text-slate-700 mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                  专项附加扣除（可选）
+                </h3>
+                <p className="text-sm text-gray-600 mb-3">勾选你符合的扣除项目：</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {deductionOptions.map(opt => (
+                    <label key={opt.key} className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-white transition">
+                      <input
+                        type="checkbox"
+                        checked={selectedDeductions.includes(opt.key)}
+                        onChange={() => toggleDeduction(opt.key)}
+                        className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                      />
+                      <span className="text-sm">{opt.label}（{opt.amount}/月）</span>
+                    </label>
+                  ))}
+                </div>
+                {specialDeduction > 0 && (
+                  <p className="text-sm text-emerald-600 mt-3 font-medium">专项附加扣除合计：¥{specialDeduction.toLocaleString()}/月</p>
+                )}
+              </div>
             </div>
           )}
         </div>
-
-        {/* Special deductions */}
-        <button onClick={() => setShowAdvanced(!showAdvanced)} className="text-sm text-emerald-600 hover:underline mb-2">
-          {showAdvanced ? '收起' : '展开'}专项附加扣除（可选）
-        </button>
-
-        {showAdvanced && (
-          <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
-            <p className="text-sm text-gray-600 mb-3">勾选你符合的扣除项目：</p>
-            <div className="grid grid-cols-2 gap-2">
-              {deductionOptions.map(opt => (
-                <label key={opt.key} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedDeductions.includes(opt.key)}
-                    onChange={() => toggleDeduction(opt.key)}
-                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                  />
-                  <span className="text-sm">{opt.label}（{opt.amount}/月）</span>
-                </label>
-              ))}
-            </div>
-            {specialDeduction > 0 && (
-              <p className="text-sm text-emerald-600 mt-3">专项附加扣除合计：¥{specialDeduction.toLocaleString()}/月</p>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Results */}
