@@ -6,3 +6,4 @@ dist/
 *.log
 _old_*
 tsconfig.tsbuildinfo
+.idea/
