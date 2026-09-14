@@ -348,7 +348,12 @@ export function getDeductionOptions() {
       amount: SPECIAL_DEDUCTIONS.elderlyCare,
       description: '赡养年满60周岁（含）的父母，及子女均已去世的年满60周岁的祖父母、外祖父母。独生子女按3000元/月定额扣除；非独生子女分摊每月3000元额度，每人不超过1500元/月，可平均分摊、约定分摊或由被赡养人指定分摊，指定优先于约定。分摊方式和额度年度内不可变更。',
     },
-    { key: 'childCare', label: '婴幼儿照护', amount: SPECIAL_DEDUCTIONS.childCare },
+    {
+      key: 'childCare',
+      label: '婴幼儿照护',
+      amount: SPECIAL_DEDUCTIONS.childCare,
+      description: '照护3岁以下婴幼儿的相关支出，从婴幼儿出生的当月至年满3周岁的前一个月，2023年度（含）后按每孩2000元/月定额扣除。父母（监护人）可选择由一方按100%扣除，或双方分别按50%扣除，扣除方式年度内不可变更。',
+    },
   ]
 }
 
