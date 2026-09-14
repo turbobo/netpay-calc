@@ -309,7 +309,12 @@ export function getDeductionOptions() {
       amount: SPECIAL_DEDUCTIONS.childEducation,
       description: '学前教育（满3岁至小学入学前）及学历教育（小学至博士），2023年起每子女2000元/月。父母可各扣50%或一方全额扣除，年度内不可变更。境内外公办/民办学校均可享受。',
     },
-    { key: 'continuingEducation', label: '继续教育', amount: SPECIAL_DEDUCTIONS.continuingEducation },
+    {
+      key: 'continuingEducation',
+      label: '继续教育',
+      amount: SPECIAL_DEDUCTIONS.continuingEducation,
+      description: '境内学历（学位）继续教育期间按400元/月定额扣除，最长不超过48个月；技能人员/专业技术人员职业资格继续教育在取得证书的年度按3600元定额扣除。本人扣除，本科（含）以下学历继续教育可选择由父母扣除；同时存在两类继续教育情形的需分别填写。',
+    },
     { key: 'housingLoan', label: '住房贷款利息', amount: SPECIAL_DEDUCTIONS.housingLoan },
     { key: 'housingRent', label: '住房租金', amount: SPECIAL_DEDUCTIONS.housingRent },
     { key: 'elderlyCare', label: '赡养老人', amount: SPECIAL_DEDUCTIONS.elderlyCare },
