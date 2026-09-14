@@ -566,7 +566,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 mb-3">补充医疗保险、企业年金、商业健康险等税前扣除项：</p>
+                <p className="text-xs text-gray-500 mb-3">补充医疗保险、企业年金、商业健康险、个人养老金等税前扣除项：</p>
                 <input
                   type="number"
                   min="0"

@@ -131,7 +131,7 @@ interface CalcParams {
   salary: number
   city?: string
   specialDeduction?: number
-  // 其他扣除（补充医保、企业年金等税前扣除项，月度金额）
+  // 其他扣除（补充医保、企业年金、个人养老金等税前扣除项，月度金额）
   otherDeduction?: number
   // 大病医疗：年度个人负担医药费总额（医保目录内自付），据实扣除、次年汇算清缴时享受
   majorMedicalExpense?: number
