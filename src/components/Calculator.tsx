@@ -643,7 +643,7 @@ export default function Calculator({ onSave }: CalculatorProps) {
                             {month} 月
                           </span>
                           {isSelected && (
-                            <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-emerald-500 text-white font-medium">
+                            <span className="ml-2 inline-flex text-xs px-1.5 py-0.5 rounded bg-emerald-500 text-white font-medium whitespace-nowrap">
                               编辑中
                             </span>
                           )}
