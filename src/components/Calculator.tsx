@@ -519,77 +519,81 @@ export default function Calculator({ onSave }: CalculatorProps) {
             </div>
           </div>
 
-          {/* 12 month cards */}
+          {/* 12 month compact view */}
           <div className="dashboard-panel p-5 md:p-7">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-5">
               <div>
                 <p className="eyebrow mb-1">Monthly cash flow</p>
                 <h3 className="text-xl font-bold text-slate-950">12 个月收入明细</h3>
               </div>
-              <p className="text-xs text-slate-500">点击卡片切换编辑月份</p>
+              <p className="text-xs text-slate-500">点击行查看详情并编辑该月额外收入</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {result.annual.monthlyResults.map(monthData => {
-                const month = monthData.month
-                const isSelected = selectedMonth === month
-                return (
-                  <button
-                    key={month}
-                    onClick={() => setSelectedMonth(month)}
-                    aria-pressed={isSelected}
-                    aria-label={`查看并编辑 ${month} 月收入`}
-                    className={`text-left min-h-[188px] rounded-xl border p-4 transition focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
-                      isSelected
-                        ? 'border-emerald-500 bg-emerald-950 text-white shadow-lg shadow-emerald-950/20'
-                        : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-emerald-300 hover:shadow-md'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={`text-sm font-semibold ${isSelected ? 'text-emerald-300' : 'text-slate-600'}`}>{month} 月</span>
-                      {isSelected && <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-400 text-emerald-950 font-semibold">当前</span>}
-                    </div>
-                    <p className={`text-2xl font-bold mb-3 tabular-nums ${isSelected ? 'text-emerald-300' : 'text-emerald-600'}`}>¥{formatMoney(monthData.netPay)}</p>
-                    <div className={`space-y-1 text-xs ${isSelected ? 'text-slate-300' : 'text-slate-500'}`}>
-                      <div className="flex justify-between">
-                        <span>总收入</span>
-                        <span>¥{formatMoney(monthData.gross)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>五险一金</span>
-                        <span className="text-red-500">-¥{formatMoney(monthData.insurance.total)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>个税</span>
-                        <span className="text-red-500">-¥{formatMoney(monthData.tax)}</span>
-                      </div>
-                      {(monthData.taxableExtraIncome > 0 || monthData.nonTaxableExtraIncome > 0 || monthData.yearEndBonus > 0) && (
-                        <div className={`pt-2 mt-2 border-t space-y-1 ${isSelected ? 'border-white/10' : 'border-slate-200'}`}>
-                          {monthData.yearEndBonus > 0 && (
-                            <div className="flex justify-between text-emerald-600">
-                              <span>年终奖</span>
-                              <span>+¥{formatMoney(monthData.yearEndBonus)}</span>
-                            </div>
+
+            {/* Compact table view */}
+            <div className="overflow-x-auto -mx-5 md:-mx-7 px-5 md:px-7">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left">
+                    <th className="pb-3 font-medium text-slate-500 w-16">月份</th>
+                    <th className="pb-3 font-medium text-slate-500 text-right">到手收入</th>
+                    <th className="pb-3 font-medium text-slate-500 text-right hidden sm:table-cell">总收入</th>
+                    <th className="pb-3 font-medium text-slate-500 text-right hidden md:table-cell">五险一金</th>
+                    <th className="pb-3 font-medium text-slate-500 text-right hidden md:table-cell">个税</th>
+                    <th className="pb-3 font-medium text-slate-500 text-right hidden lg:table-cell">额外收入</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.annual.monthlyResults.map(monthData => {
+                    const month = monthData.month
+                    const isSelected = selectedMonth === month
+                    const extraTotal = monthData.taxableExtraIncome + monthData.nonTaxableExtraIncome + monthData.yearEndBonus
+                    return (
+                      <tr
+                        key={month}
+                        onClick={() => setSelectedMonth(month)}
+                        className={`border-b border-slate-100 cursor-pointer transition ${
+                          isSelected
+                            ? 'bg-emerald-50 hover:bg-emerald-100'
+                            : 'hover:bg-slate-50'
+                        }`}
+                      >
+                        <td className="py-3 font-medium">
+                          <span className={isSelected ? 'text-emerald-700' : 'text-slate-700'}>
+                            {month} 月
+                          </span>
+                          {isSelected && (
+                            <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-emerald-500 text-white font-medium">
+                              编辑中
+                            </span>
                           )}
-                          {monthData.taxableExtraIncome > 0 && (
-                            <div className="flex justify-between text-emerald-600">
-                              <span>计税额外</span>
-                              <span>+¥{formatMoney(monthData.taxableExtraIncome)}</span>
-                            </div>
+                        </td>
+                        <td className="py-3 text-right font-semibold tabular-nums text-emerald-600">
+                          ¥{formatMoney(monthData.netPay)}
+                        </td>
+                        <td className="py-3 text-right tabular-nums text-slate-600 hidden sm:table-cell">
+                          ¥{formatMoney(monthData.gross)}
+                        </td>
+                        <td className="py-3 text-right tabular-nums text-red-500 hidden md:table-cell">
+                          -¥{formatMoney(monthData.insurance.total)}
+                        </td>
+                        <td className="py-3 text-right tabular-nums text-red-500 hidden md:table-cell">
+                          -¥{formatMoney(monthData.tax)}
+                        </td>
+                        <td className="py-3 text-right tabular-nums hidden lg:table-cell">
+                          {extraTotal > 0 ? (
+                            <span className="text-emerald-600">+¥{formatMoney(extraTotal)}</span>
+                          ) : (
+                            <span className="text-slate-400">—</span>
                           )}
-                          {monthData.nonTaxableExtraIncome > 0 && (
-                            <div className="flex justify-between text-emerald-600">
-                              <span>不计税额外</span>
-                              <span>+¥{formatMoney(monthData.nonTaxableExtraIncome)}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                )
-              })}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
-            <p className="text-xs text-gray-500 mt-4">点击卡片可切换到对应月份，编辑该月额外收入。</p>
+
+            <p className="text-xs text-gray-500 mt-4">💡 点击任意月份可切换到该月，在下方编辑额外收入。</p>
           </div>
 
           {/* Current month detail */}
