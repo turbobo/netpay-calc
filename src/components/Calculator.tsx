@@ -491,15 +491,35 @@ export default function Calculator({ onSave }: CalculatorProps) {
               <span className="text-xs text-slate-500">12 个月累计</span>
             </div>
             <div className="bg-slate-950 p-5 md:p-7 rounded-xl text-white border border-slate-800">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-                <div className="flex-1 text-left sm:text-center min-w-0">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+                <div className="flex-1 min-w-0">
                   <p className="text-slate-400 mb-1">年到手收入</p>
                   <p className="text-3xl sm:text-4xl font-bold text-emerald-400 tabular-nums">¥{formatMoney(result.annual.net)}</p>
                   <p className="text-sm text-slate-400 mt-2">
-                    年总收入 ¥{formatMoney(result.annual.gross)} · 个税 ¥{formatMoney(result.annual.tax)}
+                    年总收入 ¥{formatMoney(result.annual.gross)} · 总扣除 ¥{formatMoney(result.annual.insurance + result.annual.tax)}
                   </p>
+                  
+                  {/* Key metrics */}
+                  <div className="grid grid-cols-3 gap-4 mt-5 pt-5 border-t border-slate-800">
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">月均到手</p>
+                      <p className="text-lg font-semibold text-white tabular-nums">¥{formatMoney(result.annual.net / 12)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">到手比例</p>
+                      <p className="text-lg font-semibold text-emerald-400 tabular-nums">
+                        {result.annual.gross > 0 ? Math.round((result.annual.net / result.annual.gross) * 100) : 0}%
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">总扣除比例</p>
+                      <p className="text-lg font-semibold text-red-400 tabular-nums">
+                        {result.annual.gross > 0 ? Math.round(((result.annual.insurance + result.annual.tax) / result.annual.gross) * 100) : 0}%
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-shrink-0 self-center">
+                <div className="flex-shrink-0 self-center lg:self-auto">
                   <DonutChart netPay={result.annual.net} insurance={result.annual.insurance} tax={result.annual.tax} />
                 </div>
               </div>
