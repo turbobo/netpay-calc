@@ -28,7 +28,8 @@ export default function Calculator({ onSave }: CalculatorProps) {
   const [medicalRate, setMedicalRate] = useState(2)
   const [unemploymentRate, setUnemploymentRate] = useState(0.5)
   const [showInsuranceSettings, setShowInsuranceSettings] = useState(false)
-  const [insuranceBase, setInsuranceBase] = useState('')
+  const [socialBase, setSocialBase] = useState('')
+  const [housingBase, setHousingBase] = useState('')
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showComparison, setShowComparison] = useState(false)
   const [specialDeduction, setSpecialDeduction] = useState(0)
@@ -75,10 +76,11 @@ export default function Calculator({ onSave }: CalculatorProps) {
       selectedMonth,
       yearEndBonus: Math.max(0, parseFloat(yearEndBonus) || 0),
       bonusTaxMode,
-      insuranceBase: parseFloat(insuranceBase) || undefined,
+      socialBase: parseFloat(socialBase) || undefined,
+      housingBase: parseFloat(housingBase) || undefined,
     })
     setResult(calcResult)
-  }, [salary, salaryMode, city, specialDeduction, housingPercent, pensionRate, medicalRate, unemploymentRate, monthlyExtraIncomes, selectedMonth, yearEndBonus, bonusTaxMode, insuranceBase])
+  }, [salary, salaryMode, city, specialDeduction, housingPercent, pensionRate, medicalRate, unemploymentRate, monthlyExtraIncomes, selectedMonth, yearEndBonus, bonusTaxMode, socialBase, housingBase])
 
   useEffect(() => { doCalculate() }, [doCalculate])
 
@@ -369,22 +371,33 @@ export default function Calculator({ onSave }: CalculatorProps) {
                   </div>
                 </div>
               </div>
-              <div className="mt-4 pt-4 border-t border-slate-200">
+              <div className="mt-4 pt-4 border-t border-slate-200 space-y-3">
                 <div className="flex items-center gap-3">
-                  <label className="text-xs font-medium text-slate-500 whitespace-nowrap">缴费基数（元/月）</label>
+                  <label className="text-xs font-medium text-slate-500 whitespace-nowrap w-36">社保基数（元/月）</label>
                   <input
                     type="number"
                     min="0"
-                    value={insuranceBase}
-                    onChange={(e) => setInsuranceBase(e.target.value)}
+                    value={socialBase}
+                    onChange={(e) => setSocialBase(e.target.value)}
                     placeholder="自动计算"
                     className="w-full max-w-52 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
                   />
-                  <span className="text-xs text-slate-400">留空则按城市上下限自动计算</span>
                 </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-xs font-medium text-slate-500 whitespace-nowrap w-36">公积金基数（元/月）</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={housingBase}
+                    onChange={(e) => setHousingBase(e.target.value)}
+                    placeholder="自动计算"
+                    className="w-full max-w-52 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+                  />
+                </div>
+                <p className="text-xs text-slate-400">留空则按城市上下限自动计算，手动输入后生效全部 12 个月</p>
               </div>
               <p className="text-xs text-slate-400">
-                以上为个人缴纳比例。切换城市会自动更新公积金默认比例，其他比例可手动调整；超出范围（养老 0-20%、医疗 0-10%、失业 0-2%、公积金 0-24%）的值会自动收敛。缴费基数留空则按城市上下限自动计算，手动输入后生效全部 12 个月。
+                以上为个人缴纳比例。切换城市会自动更新公积金默认比例，其他比例可手动调整；超出范围（养老 0-20%、医疗 0-10%、失业 0-2%、公积金 0-24%）的值会自动收敛。社保与公积金基数可分开设置，留空则按城市上下限自动计算，手动输入后生效全部 12 个月。
               </p>
             </div>
           )}

@@ -9,8 +9,10 @@ import {
 
 describe('社保公积金计算', () => {
   it('按城市缴费基数上下限钳制', () => {
-    expect(calculateInsurance(3000, 'beijing').base).toBe(6326)
-    expect(calculateInsurance(100000, 'beijing').base).toBe(35283)
+    expect(calculateInsurance(3000, 'beijing').socialBase).toBe(6326)
+    expect(calculateInsurance(100000, 'beijing').socialBase).toBe(35283)
+    // 未手动指定时，社保与公积金基数相同（均为自动基数）
+    expect(calculateInsurance(100000, 'beijing').housingBase).toBe(35283)
   })
 
   it('使用城市默认公积金比例并合计五险一金', () => {
@@ -31,15 +33,33 @@ describe('社保公积金计算', () => {
   it('支持手动指定缴费基数，覆盖城市上下限', () => {
     // 20000 月薪北京自动基数应为 20000；手动指定 10000 后按 10000 计算
     const autoBase = calculateInsurance(20000, 'beijing')
-    expect(autoBase.base).toBe(20000)
+    expect(autoBase.socialBase).toBe(20000)
+    expect(autoBase.housingBase).toBe(20000)
     expect(autoBase.total).toBe(4500)
 
-    const customBase = calculateInsurance(20000, 'beijing', {}, 10000)
-    expect(customBase.base).toBe(10000)
+    const customBase = calculateInsurance(20000, 'beijing', {}, { social: 10000, housing: 10000 })
+    expect(customBase.socialBase).toBe(10000)
+    expect(customBase.housingBase).toBe(10000)
     expect(customBase.total).toBe(2250)
+  })
 
-    // 通过 calculateNetPay 的 insuranceBase 参数传入
-    const result = calculateNetPay({ salary: 20000, city: 'beijing', insuranceBase: 10000 })
+  it('社保与公积金基数可分开设置', () => {
+    // 仅指定社保基数：养老/医疗/失业按 10000，公积金仍按自动基数 20000
+    const socialOnly = calculateInsurance(20000, 'beijing', {}, { social: 10000 })
+    expect(socialOnly.socialBase).toBe(10000)
+    expect(socialOnly.housingBase).toBe(20000)
+    // 800 + 200 + 50 + 2400 = 3450
+    expect(socialOnly.total).toBe(3450)
+
+    // 仅指定公积金基数：公积金按 10000，社保仍按自动基数 20000
+    const housingOnly = calculateInsurance(20000, 'beijing', {}, { housing: 10000 })
+    expect(housingOnly.socialBase).toBe(20000)
+    expect(housingOnly.housingBase).toBe(10000)
+    // 1600 + 400 + 100 + 1200 = 3300
+    expect(housingOnly.total).toBe(3300)
+
+    // 通过 calculateNetPay 分开传入两个基数
+    const result = calculateNetPay({ salary: 20000, city: 'beijing', socialBase: 10000, housingBase: 10000 })
     expect(result.cityInfo.min).toBe(6326)
     expect(result.annual.baseSalary).toBe(240000)
     // annualInsurance = 2250 * 12 = 27000

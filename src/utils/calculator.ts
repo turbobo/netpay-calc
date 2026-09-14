@@ -67,7 +67,10 @@ const SPECIAL_DEDUCTIONS: Record<string, number> = {
 
 // Types
 export interface InsuranceResult {
-  base: number
+  // 社保缴费基数（养老/医疗/失业），可与公积金基数分开设置
+  socialBase: number
+  // 公积金缴费基数
+  housingBase: number
   pension: number
   medical: number
   unemployment: number
@@ -123,23 +126,27 @@ interface CalcParams {
   selectedMonth?: number
   yearEndBonus?: number
   bonusTaxMode?: BonusTaxMode
-  // 社保公积金缴费基数：留空则按城市上下限自动计算（Math.max(min, Math.min(salary, max))）
-  insuranceBase?: number
+  // 缴费基数：留空则按城市上下限自动计算（Math.max(min, Math.min(salary, max))），社保与公积金可分开设置
+  socialBase?: number
+  housingBase?: number
 }
 
-// 计算五险一金
-export function calculateInsurance(salary: number, city = 'default', customRates: { pension?: number; medical?: number; unemployment?: number; housing?: number } = {}, customBase?: number): InsuranceResult {
+// 计算五险一金：customBases 支持社保、公积金基数分开指定，缺省按城市上下限自动计算
+export function calculateInsurance(salary: number, city = 'default', customRates: { pension?: number; medical?: number; unemployment?: number; housing?: number } = {}, customBases: { social?: number; housing?: number } = {}): InsuranceResult {
   const cityConfig = CITY_LIMITS[city] || CITY_LIMITS.default
   const rates = { ...INSURANCE_RATES, housing: cityConfig.housingRate, ...customRates }
-  const base = customBase !== undefined ? customBase : Math.max(cityConfig.min, Math.min(salary, cityConfig.max))
+  const autoBase = Math.max(cityConfig.min, Math.min(salary, cityConfig.max))
+  const socialBase = customBases.social !== undefined ? customBases.social : autoBase
+  const housingBase = customBases.housing !== undefined ? customBases.housing : autoBase
 
-  const pension = Math.round(base * rates.pension * 100) / 100
-  const medical = Math.round(base * rates.medical * 100) / 100
-  const unemployment = Math.round(base * rates.unemployment * 100) / 100
-  const housing = Math.round(base * rates.housing * 100) / 100
+  const pension = Math.round(socialBase * rates.pension * 100) / 100
+  const medical = Math.round(socialBase * rates.medical * 100) / 100
+  const unemployment = Math.round(socialBase * rates.unemployment * 100) / 100
+  const housing = Math.round(housingBase * rates.housing * 100) / 100
 
   return {
-    base,
+    socialBase,
+    housingBase,
     pension,
     medical,
     unemployment,
@@ -214,10 +221,12 @@ export function calculateNetPay({
   selectedMonth = 1,
   yearEndBonus = 0,
   bonusTaxMode = 'combined',
-  insuranceBase,
+  socialBase,
+  housingBase,
 }: CalcParams): CalcResult {
-  const safeInsuranceBase = insuranceBase !== undefined ? Math.max(0, Number(insuranceBase) || 0) : undefined
-  const insurance = calculateInsurance(salary, city, customRates, safeInsuranceBase)
+  const safeSocialBase = socialBase !== undefined ? Math.max(0, Number(socialBase) || 0) : undefined
+  const safeHousingBase = housingBase !== undefined ? Math.max(0, Number(housingBase) || 0) : undefined
+  const insurance = calculateInsurance(salary, city, customRates, { social: safeSocialBase, housing: safeHousingBase })
   const normalizedExtraIncomes = normalizeMonthlyExtraIncomes(monthlyExtraIncomes)
   const safeSelectedMonth = Math.min(MONTH_COUNT, Math.max(1, Number(selectedMonth) || 1))
   const safeYearEndBonus = Math.max(0, Number(yearEndBonus) || 0)
