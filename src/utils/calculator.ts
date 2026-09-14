@@ -336,7 +336,12 @@ export function getDeductionOptions() {
       amount: SPECIAL_DEDUCTIONS.housingLoan,
       description: '本人或配偶（单独或共同）使用商业银行或公积金贷款购买境内住房发生的首套住房贷款利息，在实际发生利息的年度按1000元/月定额扣除，最长不超过240个月。经夫妻约定可由一方扣除，婚前各自购房的婚后可选一套由购买方全额或各自50%扣除，年度内不可变更；首套以享受首套房贷利率为准。',
     },
-    { key: 'housingRent', label: '住房租金', amount: SPECIAL_DEDUCTIONS.housingRent },
+    {
+      key: 'housingRent',
+      label: '住房租金',
+      amount: SPECIAL_DEDUCTIONS.housingRent,
+      description: '纳税人在主要工作城市没有自有住房而发生的住房租金支出，按城市分档定额扣除：直辖市、省会（首府）、计划单列市及国务院确定城市1500元/月，市辖区户籍人口超100万城市1100元/月，不超过100万城市800元/月。由签订租赁合同的承租人扣除：夫妻同城仅一方扣除，不同城且均无房可分别扣除；与住房贷款利息不可同时享受。',
+    },
     { key: 'elderlyCare', label: '赡养老人', amount: SPECIAL_DEDUCTIONS.elderlyCare },
     { key: 'childCare', label: '婴幼儿照护', amount: SPECIAL_DEDUCTIONS.childCare },
   ]
