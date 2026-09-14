@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { calculateNetPay, getCityList, getDeductionOptions, getCityHousingRate, formatMoney, POLICY_DATA_YEAR } from '../utils/calculator'
 import type { CalcResult, BonusTaxMode } from '../utils/calculator'
 import SalaryIncreaseCalculator from './SalaryIncreaseCalculator'
+import FormattedInput from './FormattedInput'
 
 const MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) => index + 1)
 
@@ -149,12 +150,12 @@ export default function Calculator({ onSave }: CalculatorProps) {
             切换{salaryMode === 'monthly' ? '年薪' : '月薪'}模式
           </button>
         </div>
-        <input
-          type="number"
+        <FormattedInput
           value={salary}
-          onChange={(e) => setSalary(e.target.value)}
-          placeholder={salaryMode === 'monthly' ? '如 15000' : '如 300000'}
-          className="input text-lg font-semibold tabular-nums"
+          onChange={setSalary}
+          prefix="¥"
+          placeholder={salaryMode === 'monthly' ? '如 15,000' : '如 300,000'}
+          className="input text-lg font-semibold"
         />
 
         {/* Monthly extra income */}
@@ -183,13 +184,11 @@ export default function Calculator({ onSave }: CalculatorProps) {
                   应用全年
                 </button>
               </div>
-              <input
+              <FormattedInput
                 id="taxable-extra-income"
-                type="number"
-                min="0"
-                step="100"
                 value={selectedExtraIncome.taxable}
-                onChange={(event) => updateMonthlyExtraIncome('taxable', event.target.value)}
+                onChange={(v) => updateMonthlyExtraIncome('taxable', v)}
+                prefix="¥"
                 placeholder="如奖金、佣金"
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
               />
@@ -201,13 +200,11 @@ export default function Calculator({ onSave }: CalculatorProps) {
                   应用全年
                 </button>
               </div>
-              <input
+              <FormattedInput
                 id="non-taxable-extra-income"
-                type="number"
-                min="0"
-                step="100"
                 value={selectedExtraIncome.nonTaxable}
-                onChange={(event) => updateMonthlyExtraIncome('nonTaxable', event.target.value)}
+                onChange={(v) => updateMonthlyExtraIncome('nonTaxable', v)}
+                prefix="¥"
                 placeholder="如报销、免税补贴"
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
               />
@@ -232,15 +229,12 @@ export default function Calculator({ onSave }: CalculatorProps) {
               <p className="text-xs text-gray-500 mt-0.5">默认发放于 12 月，可选择计税口径</p>
             </div>
             <div className="sm:w-52">
-              <input
-                type="number"
-                min="0"
-                step="1000"
+              <FormattedInput
                 value={yearEndBonus}
-                onChange={(event) => setYearEndBonus(event.target.value)}
-                placeholder="如 36000"
-                aria-label="年终奖金额"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+                onChange={setYearEndBonus}
+                prefix="¥"
+                placeholder="如 36,000"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
               />
             </div>
           </div>
@@ -374,24 +368,22 @@ export default function Calculator({ onSave }: CalculatorProps) {
               <div className="mt-4 pt-4 border-t border-slate-200 space-y-3">
                 <div className="flex items-center gap-3">
                   <label className="text-xs font-medium text-slate-500 whitespace-nowrap w-36">社保基数（元/月）</label>
-                  <input
-                    type="number"
-                    min="0"
+                  <FormattedInput
                     value={socialBase}
-                    onChange={(e) => setSocialBase(e.target.value)}
+                    onChange={setSocialBase}
+                    prefix="¥"
                     placeholder="自动计算"
-                    className="w-full max-w-52 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+                    className="w-full max-w-52 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
                   />
                 </div>
                 <div className="flex items-center gap-3">
                   <label className="text-xs font-medium text-slate-500 whitespace-nowrap w-36">公积金基数（元/月）</label>
-                  <input
-                    type="number"
-                    min="0"
+                  <FormattedInput
                     value={housingBase}
-                    onChange={(e) => setHousingBase(e.target.value)}
+                    onChange={setHousingBase}
+                    prefix="¥"
                     placeholder="自动计算"
-                    className="w-full max-w-52 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none tabular-nums"
+                    className="w-full max-w-52 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
                   />
                 </div>
                 <p className="text-xs text-slate-400">留空则按城市上下限自动计算，手动输入后生效全部 12 个月</p>
