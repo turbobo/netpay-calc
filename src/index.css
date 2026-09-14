@@ -44,4 +44,63 @@
     @apply text-xs font-semibold uppercase text-emerald-600;
     letter-spacing: 0.18em;
   }
+
+
+  /* Toast notification animation */
+  .toast-enter {
+    @apply animate-in slide-in-from-bottom-4 fade-in duration-300;
+  }
+
+  .toast-exit {
+    @apply animate-out slide-out-to-bottom-4 fade-out duration-200;
+  }
 }
+
+@layer utilities {
+  /* Smooth transitions for interactive elements */
+  .transition-card {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  .transition-card:hover {
+    @apply scale-[1.02] shadow-lg;
+  }
+
+  .transition-card:active {
+    @apply scale-[0.98];
+  }
+
+  /* Expand/collapse animation */
+  .expand-enter {
+    animation: expandIn 0.3s ease-out;
+  }
+
+  .expand-exit {
+    animation: expandOut 0.2s ease-in;
+  }
+
+  @keyframes expandIn {
+    from {
+      opacity: 0;
+      max-height: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      max-height: 1000px;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes expandOut {
+    from {
+      opacity: 1;
+      max-height: 1000px;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      max-height: 0;
+      transform: translateY(-10px);
+    }
+  }

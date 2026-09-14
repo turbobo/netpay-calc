@@ -5,6 +5,7 @@ import { useHashRoute } from '../hooks/useHashRoute'
 import Navbar from '../components/Navbar'
 import Calculator from '../components/Calculator'
 import { formatMoney } from '../utils/calculator'
+import Toast from '../components/Toast'
 import type { CalcResult } from '../utils/calculator'
 
 interface HistoryEntry {
@@ -30,6 +31,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [storageNotice, setStorageNotice] = useState('')
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
 
   useEffect(() => {
     auth.getUser().then(({ user }) => {
@@ -88,10 +90,13 @@ export default function DashboardPage() {
     const persisted = persistHistory(updated)
     if (!persisted) {
       setStorageNotice('本地存储空间不足，最新记录暂未写入浏览器存储，请删除部分历史记录后重试。')
+      setToast({ message: '保存失败：存储空间不足', type: 'error' })
     } else if (overflow) {
       setStorageNotice(`历史记录上限为 ${MAX_HISTORY_ENTRIES} 条，最早的记录已自动移除。`)
+      setToast({ message: '已保存（自动移除最早记录）', type: 'info' })
     } else {
       setStorageNotice('')
+      setToast({ message: '✓ 计算结果已保存', type: 'success' })
     }
   }
 
@@ -195,6 +200,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   )
 }

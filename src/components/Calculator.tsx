@@ -571,10 +571,10 @@ export default function Calculator({ onSave }: CalculatorProps) {
                       <tr
                         key={month}
                         onClick={() => setSelectedMonth(month)}
-                        className={`border-b border-slate-100 cursor-pointer transition ${
+                        className={`border-b border-slate-100 cursor-pointer transition-all duration-200 ${
                           isSelected
                             ? 'bg-emerald-50 hover:bg-emerald-100'
-                            : 'hover:bg-slate-50'
+                            : 'hover:bg-slate-50 hover:scale-[1.01] hover:shadow-md'
                         }`}
                       >
                         <td className="py-3 font-medium">
