@@ -330,7 +330,12 @@ export function getDeductionOptions() {
       amount: SPECIAL_DEDUCTIONS.continuingEducation,
       description: '境内学历（学位）继续教育期间按400元/月定额扣除，最长不超过48个月；技能人员/专业技术人员职业资格继续教育在取得证书的年度按3600元定额扣除。本人扣除，本科（含）以下学历继续教育可选择由父母扣除；同时存在两类继续教育情形的需分别填写。',
     },
-    { key: 'housingLoan', label: '住房贷款利息', amount: SPECIAL_DEDUCTIONS.housingLoan },
+    {
+      key: 'housingLoan',
+      label: '住房贷款利息',
+      amount: SPECIAL_DEDUCTIONS.housingLoan,
+      description: '本人或配偶（单独或共同）使用商业银行或公积金贷款购买境内住房发生的首套住房贷款利息，在实际发生利息的年度按1000元/月定额扣除，最长不超过240个月。经夫妻约定可由一方扣除，婚前各自购房的婚后可选一套由购买方全额或各自50%扣除，年度内不可变更；首套以享受首套房贷利率为准。',
+    },
     { key: 'housingRent', label: '住房租金', amount: SPECIAL_DEDUCTIONS.housingRent },
     { key: 'elderlyCare', label: '赡养老人', amount: SPECIAL_DEDUCTIONS.elderlyCare },
     { key: 'childCare', label: '婴幼儿照护', amount: SPECIAL_DEDUCTIONS.childCare },
