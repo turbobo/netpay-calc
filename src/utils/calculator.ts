@@ -342,7 +342,12 @@ export function getDeductionOptions() {
       amount: SPECIAL_DEDUCTIONS.housingRent,
       description: '纳税人在主要工作城市没有自有住房而发生的住房租金支出，按城市分档定额扣除：直辖市、省会（首府）、计划单列市及国务院确定城市1500元/月，市辖区户籍人口超100万城市1100元/月，不超过100万城市800元/月。由签订租赁合同的承租人扣除：夫妻同城仅一方扣除，不同城且均无房可分别扣除；与住房贷款利息不可同时享受。',
     },
-    { key: 'elderlyCare', label: '赡养老人', amount: SPECIAL_DEDUCTIONS.elderlyCare },
+    {
+      key: 'elderlyCare',
+      label: '赡养老人',
+      amount: SPECIAL_DEDUCTIONS.elderlyCare,
+      description: '赡养年满60周岁（含）的父母，及子女均已去世的年满60周岁的祖父母、外祖父母。独生子女按3000元/月定额扣除；非独生子女分摊每月3000元额度，每人不超过1500元/月，可平均分摊、约定分摊或由被赡养人指定分摊，指定优先于约定。分摊方式和额度年度内不可变更。',
+    },
     { key: 'childCare', label: '婴幼儿照护', amount: SPECIAL_DEDUCTIONS.childCare },
   ]
 }
