@@ -149,8 +149,27 @@ export default function DashboardPage() {
               </div>
             )}
             {history.length === 0 ? (
-              <div className="dashboard-panel p-8 text-center">
-                <p className="text-slate-400">暂无记录，完成计算后点击"保存此次计算"</p>
+              <div className="dashboard-panel p-10 text-center">
+                <div className="mb-5 flex items-center justify-center">
+                  <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center">
+                    <svg className="w-12 h-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-slate-700 mb-2">还没有保存的计算记录</h3>
+                <p className="text-sm text-slate-500 mb-5 max-w-md mx-auto">
+                  在上方完成收入计算后，点击"保存此次计算"按钮，即可在这里查看和管理所有方案。
+                </p>
+                <a
+                  href="#/"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-400 transition"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  去计算第一笔
+                </a>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
